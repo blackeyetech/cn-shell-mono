@@ -4,10 +4,10 @@
   "description": "Cloud Native Shell Monorepo",
   "lint-staged": {
     "**/src/**/*.ts": [
-      "prettier --write",
+      "pnpm prettier --write",
       "git add"
     ],
-    "**/*.{json,md,yaml}": [
+    "**/*.{json,md,yaml,yml}": [
       "prettier --write",
       "git add"
     ]
@@ -16,7 +16,7 @@
     "trailingComma": "all"
   },
   "scripts": {
-    "prep-husky": "npx husky install && npx husky add .husky/pre-commit 'npx lint-staged' && git add .husky/pre-commit"
+    "prep-husky": "npx husky install && git add .husky/pre-commit"
   },
   "engines": {
     "node": ">=10.0.0"
