@@ -1,5 +1,7 @@
 # node directories and files
 node_modules/
 npm-debug.log
+.pnpm-debug.log
+
 # The transpiled TypeScript code
 dist/

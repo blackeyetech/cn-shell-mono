@@ -12,15 +12,12 @@
       "git add"
     ]
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
   "prettier": {
     "trailingComma": "all"
   },
-  "scripts": {},
+  "scripts": {
+    "prep-husky": "npx husky install && npx husky add .husky/pre-commit 'npx lint-staged' && git add .husky/pre-commit"
+  },
   "engines": {
     "node": ">=10.0.0"
   },
