@@ -5,3 +5,5 @@ npm-debug.log
 
 # The transpiled TypeScript code
 dist/
+
+.DS_Store
