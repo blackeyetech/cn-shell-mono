@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
 
 // Log levels
-enum CNLogLevel {
+export enum CNLogLevel {
   LOG_COMPLETE_SILENCE = 0, // Nothing - not even fatals
   LOG_QUIET = 100, // Log nothing except fatals, errors and warnings
   LOG_INFO = 200, // Log info messages
@@ -27,7 +27,7 @@ export abstract class CNLogger {
   }
 
   start(): void {
-    // Override if you need to set something up before logging, e.g. open a file
+    // Override if you need to set something up before logging starts, e.g. open a file
     this._started = true;
     return;
   }
@@ -38,14 +38,14 @@ export abstract class CNLogger {
     return;
   }
 
-  abstract fatal(...args: any): void;
-  abstract error(...args: any): void;
-  abstract warn(...args: any): void;
-  abstract startup(...args: any): void;
-  abstract info(...args: any): void;
-  abstract debug(...args: any): void;
-  abstract trace(...args: any): void;
-  abstract force(...args: any): void;
+  abstract fatal(appOrExtName: string, ...args: any): void;
+  abstract error(appOrExtName: string, ...args: any): void;
+  abstract warn(appOrExtName: string, ...args: any): void;
+  abstract startup(appOrExtName: string, ...args: any): void;
+  abstract info(appOrExtName: string, ...args: any): void;
+  abstract debug(appOrExtName: string, ...args: any): void;
+  abstract trace(appOrExtName: string, ...args: any): void;
+  abstract force(appOrExtName: string, ...args: any): void;
 
   set level(level: CNLogLevel) {
     this._level = level;
@@ -53,10 +53,6 @@ export abstract class CNLogger {
 
   get started(): boolean {
     return this._started;
-  }
-
-  static get CNLogLevel(): typeof CNLogLevel {
-    return CNLogLevel;
   }
 
   protected timestamp(): string {
