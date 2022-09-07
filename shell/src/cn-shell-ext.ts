@@ -63,9 +63,7 @@ export class CNShellExt {
       ...passedParams,
     };
 
-    // Make sure to set the extension name so the logger uses it
-    params.appOrExtName = this._name;
-    return this._shell.getConfigStr(params);
+    return this._shell.getConfigStr(params, this._name);
   }
 
   getConfigBool(passedParams: ConfigOptions): boolean {
@@ -74,9 +72,7 @@ export class CNShellExt {
       ...passedParams,
     };
 
-    // Make sure to set the extension name so the logger uses it
-    params.appOrExtName = this._name;
-    return this._shell.getConfigBool(params);
+    return this._shell.getConfigBool(params, this._name);
   }
 
   getConfigNum(passedParams: ConfigOptions): number {
@@ -85,20 +81,7 @@ export class CNShellExt {
       ...passedParams,
     };
 
-    // Make sure to set the extension name so the logger uses it
-    params.appOrExtName = this._name;
-    return this._shell.getConfigNum(params);
-  }
-
-  getConfig(passedParams: ConfigOptions): string | number | boolean {
-    let params = {
-      ...DEFAULT_CONFIG_OPTIONS,
-      ...passedParams,
-    };
-
-    // Make sure to set the extension name so the logger uses it
-    params.appOrExtName = this._name;
-    return this._shell.getConfig(params);
+    return this._shell.getConfigNum(params, this._name);
   }
 
   fatal(...args: any): void {

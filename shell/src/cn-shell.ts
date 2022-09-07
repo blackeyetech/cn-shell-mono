@@ -2,20 +2,24 @@
 import { CNLogger, CNLogLevel } from "./cn-logger";
 import { CNShellExt } from "./cn-shell-ext";
 import { CNLoggerConsole } from "./cn-logger-console";
+import { CNConfigMan, ConfigTypes, ConfigOptions } from "./cn-config-man";
 
-import dotenv from "dotenv";
-import minimist from "minimist";
 import * as shell from "shelljs";
 
 import * as http from "http";
 import os from "os";
 import readline from "readline";
 
-export { CNLogger, CNLogLevel, CNShellExt };
+export {
+  CNLogger,
+  CNLogLevel,
+  CNShellExt,
+  CNConfigMan,
+  ConfigTypes,
+  ConfigOptions,
+};
 
 // Config consts here
-const CFG_DOTENV_PATH = "DOTENV_PATH";
-
 const CFG_LOG_LEVEL = "LOG_LEVEL";
 const CFG_LOG_TIMESTAMP = "LOG_TIMESTAMP";
 const CFG_LOG_TIMESTAMP_FORMAT = "LOG_TIMESTAMP_FORMAT";
@@ -47,14 +51,13 @@ const CN_VERSION = require("../package.json").version; // Version of CNShell
 const NODE_ENV =
   process.env.NODE_ENV === undefined ? "development" : process.env.NODE_ENV;
 
-const LOGGER_APP_NAME = "Main";
+const LOGGER_APP_NAME = "App";
+
+const DEFAULT_CONFIG_OPTIONS = {
+  envVarPrefix: "CNA_",
+};
 
 // enums here
-export enum ConfigTypes {
-  String,
-  Boolean,
-  Number,
-}
 
 // Interfaces here
 export interface CNShellConfig {
@@ -62,27 +65,6 @@ export interface CNShellConfig {
   appVersion: string;
   logger?: CNLogger;
 }
-
-export interface ConfigOptions {
-  config: string;
-  type?: ConfigTypes;
-  defaultVal?: string;
-  silent?: boolean;
-  redact?: boolean;
-  required?: boolean;
-  appOrExtName?: string;
-  envVarPrefix?: string;
-}
-
-const DEFAULT_CONFIG_OPTIONS = {
-  type: ConfigTypes.String,
-  defaultVal: "",
-  silent: false,
-  redact: false,
-  required: false,
-  appOrExtName: LOGGER_APP_NAME,
-  envVarPrefix: "CNA_",
-};
 
 export interface QuestionOptions {
   muteAnswer?: boolean;
@@ -93,14 +75,16 @@ const DEFAULT_QUESTION_OPTIONS = {
   muteAnswer: false,
   muteChar: "*",
 };
+
 // CNShell class here
 export class CNShell {
   // Properties here
   private readonly _name: string;
   private readonly _appVersion: string;
+  private _configMan: CNConfigMan;
+
   private _logger: CNLogger;
 
-  private _minimist: minimist.ParsedArgs;
   private _healthcheckServer?: http.Server;
   private _healthCheckPath?: string;
   private _healthCheckGoodResCode: number;
@@ -112,21 +96,8 @@ export class CNShell {
   constructor(config: CNShellConfig) {
     this._name = config.name;
     this._appVersion = config.appVersion;
-
+    this._configMan = new CNConfigMan();
     this._exts = [];
-
-    // NB: This must be set before getConfig is ever called
-    this._minimist = minimist(process.argv.slice(2));
-
-    let dotenvPath = this.getConfigStr({
-      config: CFG_DOTENV_PATH,
-    });
-
-    // If there is a CFG_DOTENV_PATH ...
-    if (dotenvPath.length) {
-      // .. then pass it to dotenv
-      dotenv.config({ path: dotenvPath });
-    }
 
     // If a logger has been past in ...
     if (config.logger !== undefined) {
@@ -315,25 +286,6 @@ export class CNShell {
     this.startup("Now listening. Healthcheck endpoint enabled!");
   }
 
-  private convertConfigValue(
-    value: string,
-    type: ConfigTypes,
-  ): number | string | boolean {
-    switch (type) {
-      case ConfigTypes.Number:
-        return parseInt(value, 10);
-      case ConfigTypes.Boolean:
-        // Only accept y/Y to mean true
-        if (value.toUpperCase() === "Y") {
-          return true;
-        }
-        return false;
-      default:
-        // All that is left is String and this is already a string
-        return value;
-    }
-  }
-
   private async startupError(testing: boolean) {
     this.error("Heuston, we have a problem. Shutting down now ...");
 
@@ -416,6 +368,45 @@ export class CNShell {
     }
   }
 
+  getConfigStr(
+    passedParams: ConfigOptions,
+    appOrExtName = LOGGER_APP_NAME,
+  ): string {
+    let params = {
+      ...DEFAULT_CONFIG_OPTIONS,
+      ...passedParams,
+      type: ConfigTypes.String,
+    };
+
+    return <string>this._configMan.get(params, appOrExtName, this._logger);
+  }
+
+  getConfigBool(
+    passedParams: ConfigOptions,
+    appOrExtName = LOGGER_APP_NAME,
+  ): boolean {
+    let params = {
+      ...DEFAULT_CONFIG_OPTIONS,
+      ...passedParams,
+      type: ConfigTypes.Boolean,
+    };
+
+    return <boolean>this._configMan.get(params, appOrExtName, this._logger);
+  }
+
+  getConfigNum(
+    passedParams: ConfigOptions,
+    appOrExtName = LOGGER_APP_NAME,
+  ): number {
+    let params = {
+      ...DEFAULT_CONFIG_OPTIONS,
+      ...passedParams,
+      type: ConfigTypes.Number,
+    };
+
+    return <number>this._configMan.get(params, appOrExtName, this._logger);
+  }
+
   async healthcheckCallback(
     req: http.IncomingMessage,
     res: http.ServerResponse,
@@ -441,93 +432,6 @@ export class CNShell {
     }
 
     res.end();
-  }
-
-  getConfigStr(passedParams: ConfigOptions): string {
-    passedParams.type = ConfigTypes.String;
-
-    return <string>this.getConfig(passedParams);
-  }
-
-  getConfigBool(passedParams: ConfigOptions): boolean {
-    passedParams.type = ConfigTypes.Boolean;
-
-    return <boolean>this.getConfig(passedParams);
-  }
-
-  getConfigNum(passedParams: ConfigOptions): number {
-    passedParams.type = ConfigTypes.Number;
-
-    return <number>this.getConfig(passedParams);
-  }
-
-  getConfig(passedParams: ConfigOptions): string | number | boolean {
-    // Setup the defaults
-    let params = {
-      ...DEFAULT_CONFIG_OPTIONS,
-      ...passedParams,
-    };
-
-    // Check the CLI first, i.e. CLI has higher precedence then env vars
-    // NOTE: Always convert to lower case for the CLI
-    let cliParam = params.config.toLowerCase();
-    let value = this._minimist[cliParam];
-
-    if (value !== undefined) {
-      if (
-        this._logger !== undefined &&
-        this._logger.started &&
-        params.silent === false
-      ) {
-        this._logger.startup(
-          params.appOrExtName,
-          "CLI parameter (%s) = (%s)",
-          cliParam,
-          params.redact ? "redacted" : value,
-        );
-      }
-
-      // NOTE: Minimist does type conversions so no need to do it here, HOWEVER:
-      // it could confusion a numeric string to be a number so check for that
-      if (params.type === ConfigTypes.String && typeof value === "number") {
-        return value.toString();
-      }
-
-      return value;
-    }
-
-    // OK it's not in the CLI so lets try the env vars
-    // NOTE: Alawys convert to upper case for env vars and prepend CNA_
-    let evar = `${params.envVarPrefix}${params.config.toUpperCase()}`;
-    value = process.env[evar];
-
-    // If env var doesn't exist then check what to do next
-    if (value === undefined) {
-      // Spit the dummy if it's required
-      if (params.required) {
-        throw Error(
-          `Config parameter (${params.config}) not set on the CLI or as an env var!`,
-        );
-      }
-
-      // Alls good, just use the default value
-      value = params.defaultVal;
-    }
-
-    if (
-      this._logger !== undefined &&
-      this._logger.started &&
-      params.silent === false
-    ) {
-      this._logger.startup(
-        params.appOrExtName,
-        "Env var (%s) = (%s)",
-        evar,
-        params.redact ? "redacted" : value,
-      );
-    }
-
-    return this.convertConfigValue(value, params.type);
   }
 
   fatal(...args: any): void {
