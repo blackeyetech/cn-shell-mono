@@ -1,5 +1,6 @@
-import { CNLogger, CNLogLevel } from "./cn-logger";
-import util from "util";
+import { CNLogger, CNLogLevel } from "./cn-logger.js";
+
+import * as util from "node:util";
 
 export class CNLoggerConsole extends CNLogger {
   constructor(name: string, logTimestamps: boolean, timestampFormat: string) {

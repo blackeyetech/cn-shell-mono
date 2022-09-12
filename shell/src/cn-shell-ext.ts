@@ -1,5 +1,5 @@
 // imports here
-import { CNShell, ConfigOptions } from "./cn-shell";
+import { CNShell, ConfigOptions } from "./cn-shell.js";
 
 // Interfaces here
 export interface CNShellExtConfig {

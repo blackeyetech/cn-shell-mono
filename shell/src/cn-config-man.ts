@@ -1,5 +1,5 @@
 // imports here
-import { CNLogger } from "./cn-logger";
+import { CNLogger } from "./cn-logger.js";
 
 import dotenv from "dotenv";
 import minimist from "minimist";

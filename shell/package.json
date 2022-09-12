@@ -2,7 +2,14 @@
   "version": "2.30.0",
   "name": "cn-shell",
   "description": "Cloud Native Shell",
-  "main": "./dist/cn-shell.js",
+  "main": "./dist/cjs/src/cn-shell.js",
+  "module": "./dist/mjs/src/cn-shell.js",
+  "exports": {
+    "node": {
+      "require": "./dist/cjs/src/cn-shell.js",
+      "import": "./dist/mjs/src/cn-shell.js"
+    }
+  },
   "bin": "",
   "files": [
     "dist/**/*"
@@ -11,8 +18,12 @@
     "trailingComma": "all"
   },
   "scripts": {
-    "build-dev": "tsc --project tsconfig.dev.json",
-    "build-prod": "npm run clean && tsc",
+    "build-mjs-dev": "tsc --project tsconfig.mjs.json --sourceMap && cp package.mjs.json dist/mjs/src/package.json",
+    "build-cjs-dev": "tsc --project tsconfig.cjs.json --sourceMap && cp package.cjs.json dist/cjs/src/package.json",
+    "build-dev": "npm run build-mjs-dev && npm run build-cjs-dev",
+    "build-mjs-prod": "tsc --project tsconfig.mjs.json && cp package.mjs.json dist/mjs/src/package.json",
+    "build-cjs-prod": "tsc --project tsconfig.cjs.json && cp package.cjs.json dist/cjs/src/package.json",
+    "build-prod": "npm run clean && npm run build-mjs-prod && npm run build-cjs-prod",
     "format-ts": "prettier --write 'src/**/*.ts'",
     "format-js": "prettier --write 'dist/**/*.{js,ts}'",
     "format-misc": "prettier --write '**/*.{json,md,yaml}'",
@@ -23,7 +34,7 @@
     "prepublishOnly": "npm run format-js && npm test"
   },
   "engines": {
-    "node": ">=10.0.0"
+    "node": ">=14.0.0"
   },
   "keywords": [
     "Cloud",
@@ -35,26 +46,13 @@
   "author": "Black Eye Technology",
   "license": "MIT",
   "devDependencies": {
-    "@types/koa": "^2.13.5",
-    "@types/koa-bodyparser": "^4.3.7",
-    "@types/koa-compress": "^2.0.9",
-    "@types/koa-helmet": "^6.0.4",
-    "@types/koa-router": "^7.4.4",
-    "@types/koa__cors": "^3.3.0",
     "@types/luxon": "^3.0.0",
     "@types/minimist": "^1.2.2",
-    "@types/node": "^12.20.55",
+    "@types/node": "^14",
     "@types/shelljs": "^0.8.11"
   },
   "dependencies": {
-    "@koa/cors": "^3.3.0",
-    "axios": "^0.25.0",
     "dotenv": "^16.0.1",
-    "koa": "^2.13.4",
-    "koa-bodyparser": "^4.3.0",
-    "koa-compress": "^4.0.1",
-    "koa-helmet": "^4.2.1",
-    "koa-router": "^7.4.0",
     "luxon": "^3.0.1",
     "minimist": "^1.2.6",
     "shelljs": "^0.8.5"

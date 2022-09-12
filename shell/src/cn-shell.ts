@@ -1,14 +1,14 @@
 // imports here
-import { CNLogger, CNLogLevel } from "./cn-logger";
-import { CNShellExt } from "./cn-shell-ext";
-import { CNLoggerConsole } from "./cn-logger-console";
-import { CNConfigMan, ConfigTypes, ConfigOptions } from "./cn-config-man";
+import { CNLogger, CNLogLevel } from "./cn-logger.js";
+import { CNShellExt } from "./cn-shell-ext.js";
+import { CNLoggerConsole } from "./cn-logger-console.js";
+import { CNConfigMan, ConfigTypes, ConfigOptions } from "./cn-config-man.js";
 
-import * as shell from "shelljs";
+import shell from "shelljs";
 
-import * as http from "http";
-import os from "os";
-import readline from "readline";
+import * as http from "node:http";
+import * as os from "node:os";
+import * as readline from "node:readline";
 
 export {
   CNLogger,
@@ -46,7 +46,7 @@ const DEFAULT_HTTP_HEALTHCHECK_GOOD_RES = "200";
 const DEFAULT_HTTP_HEALTHCHECK_BAD_RES = "503";
 
 // Misc consts here
-const CN_VERSION = require("../package.json").version; // Version of CNShell
+const CN_VERSION = "x.x.x"; // Version of CNShell
 
 const NODE_ENV =
   process.env.NODE_ENV === undefined ? "development" : process.env.NODE_ENV;
@@ -240,7 +240,7 @@ export class CNShell {
     let ip = "";
 
     // Search for the first I/F with a family of type IPv4
-    let found = ifaces[httpif].find((i) => i.family === "IPv4");
+    let found = ifaces[httpif]?.find((i) => i.family === "IPv4");
     if (found !== undefined) {
       ip = found.address;
       this.startup(`Found IP (${ip}) for interface ${httpif}`);
