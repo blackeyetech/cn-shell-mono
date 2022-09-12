@@ -46,8 +46,6 @@ const DEFAULT_HTTP_HEALTHCHECK_GOOD_RES = "200";
 const DEFAULT_HTTP_HEALTHCHECK_BAD_RES = "503";
 
 // Misc consts here
-const CN_VERSION = "x.x.x"; // Version of CNShell
-
 const NODE_ENV =
   process.env.NODE_ENV === undefined ? "development" : process.env.NODE_ENV;
 
@@ -180,9 +178,9 @@ export class CNShell {
     return this._name;
   }
 
-  get cnVersion(): string {
-    return CN_VERSION;
-  }
+  // get cnVersion(): string {
+  //   return CN_VERSION;
+  // }
 
   get appVersion(): string {
     return this._appVersion;
@@ -301,7 +299,7 @@ export class CNShell {
   // Public methods here
   async init(testing: boolean = false) {
     this.startup("Initialising ...");
-    this.startup(`CN-Shell Version (${CN_VERSION})`);
+    // this.startup(`CN-Shell Version (${CN_VERSION})`);
     this.startup(`App Version (${this._appVersion})`);
     this.startup(`NODE_ENV (${NODE_ENV})`);
 

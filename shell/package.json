@@ -1,5 +1,5 @@
 {
-  "version": "2.30.0",
+  "version": "3.0.0",
   "name": "cn-shell",
   "description": "Cloud Native Shell",
   "main": "./dist/cjs/src/cn-shell.js",
@@ -30,7 +30,7 @@
     "install-bin": "npm install -g $(npm pack . | tail -1)",
     "test": "echo \"No tests\" && exit 0",
     "clean": "rm -rf ./dist",
-    "prepare": "npm run clean && npm run format-ts && npm run format-misc && tsc",
+    "prepare": "npm run clean && npm run format-ts && npm run format-misc && npm run build-prod",
     "prepublishOnly": "npm run format-js && npm test"
   },
   "engines": {
