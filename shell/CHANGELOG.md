@@ -1,5 +1,11 @@
 # cn-shell
 
+## 3.0.2
+
+### Patch Changes
+
+- Minor behind the scene changes to CNConfigMan
+
 ## 3.0.1
 
 ### Patch Changes

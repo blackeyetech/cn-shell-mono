@@ -1,5 +1,5 @@
 {
-  "version": "3.0.1",
+  "version": "3.0.2",
   "name": "cn-shell",
   "description": "Cloud Native Shell",
   "main": "./dist/cjs/src/cn-shell.js",
@@ -18,11 +18,11 @@
     "trailingComma": "all"
   },
   "scripts": {
-    "build-mjs-dev": "tsc --project tsconfig.mjs.json --sourceMap && cp package.mjs.json dist/mjs/src/package.json",
-    "build-cjs-dev": "tsc --project tsconfig.cjs.json --sourceMap && cp package.cjs.json dist/cjs/src/package.json",
+    "build-mjs-dev": "tsc --project tsconfig.mjs.json --sourceMap && cp ../package.mjs.json dist/mjs/src/package.json",
+    "build-cjs-dev": "tsc --project tsconfig.cjs.json --sourceMap && cp ../package.cjs.json dist/cjs/src/package.json",
     "build-dev": "npm run build-mjs-dev && npm run build-cjs-dev",
-    "build-mjs-prod": "tsc --project tsconfig.mjs.json && cp package.mjs.json dist/mjs/src/package.json",
-    "build-cjs-prod": "tsc --project tsconfig.cjs.json && cp package.cjs.json dist/cjs/src/package.json",
+    "build-mjs-prod": "tsc --project tsconfig.mjs.json && cp ../package.mjs.json dist/mjs/src/package.json",
+    "build-cjs-prod": "tsc --project tsconfig.cjs.json && cp ../package.cjs.json dist/cjs/src/package.json",
     "build-prod": "npm run clean && npm run build-mjs-prod && npm run build-cjs-prod",
     "format-ts": "prettier --write 'src/**/*.ts'",
     "format-js": "prettier --write 'dist/**/*.{js,ts}'",

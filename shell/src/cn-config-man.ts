@@ -17,7 +17,6 @@ export enum ConfigTypes {
 // Interfaces here
 export interface ConfigOptions {
   config: string;
-  type?: ConfigTypes;
   defaultVal?: string;
   silent?: boolean;
   redact?: boolean;
@@ -26,7 +25,6 @@ export interface ConfigOptions {
 }
 
 const DEFAULT_CONFIG_OPTIONS = {
-  type: ConfigTypes.String,
   defaultVal: "",
   silent: false,
   redact: false,
@@ -43,9 +41,8 @@ export class CNConfigMan {
   constructor() {
     this._minimist = minimist(process.argv.slice(2));
 
-    let dotenvPath = <string>this.get({
+    let dotenvPath = <string>this.get(ConfigTypes.String, {
       config: CFG_DOTENV_PATH,
-      type: ConfigTypes.String,
     });
 
     // If there is a CFG_DOTENV_PATH ...
@@ -77,6 +74,7 @@ export class CNConfigMan {
 
   // Public methods here
   get(
+    type: ConfigTypes,
     passedParams: ConfigOptions,
     appOrExtName: string = "",
     logger?: CNLogger,
@@ -104,7 +102,7 @@ export class CNConfigMan {
 
       // NOTE: Minimist does type conversions so no need to do it here, HOWEVER:
       // it could confusion a numeric string to be a number so check for that
-      if (params.type === ConfigTypes.String && typeof value === "number") {
+      if (type === ConfigTypes.String && typeof value === "number") {
         return value.toString();
       }
 
@@ -138,6 +136,6 @@ export class CNConfigMan {
       );
     }
 
-    return this.convertConfigValue(value, params.type);
+    return this.convertConfigValue(value, type);
   }
 }

@@ -1,6 +1,6 @@
 // imports here
 import { CNLogger, CNLogLevel } from "./cn-logger.js";
-import { CNShellExt } from "./cn-shell-ext.js";
+import { CNShellExt, CNShellExtConfig } from "./cn-shell-ext.js";
 import { CNLoggerConsole } from "./cn-logger-console.js";
 import { CNConfigMan, ConfigTypes, ConfigOptions } from "./cn-config-man.js";
 
@@ -14,6 +14,7 @@ export {
   CNLogger,
   CNLogLevel,
   CNShellExt,
+  CNShellExtConfig,
   CNConfigMan,
   ConfigTypes,
   ConfigOptions,
@@ -373,10 +374,16 @@ export class CNShell {
     let params = {
       ...DEFAULT_CONFIG_OPTIONS,
       ...passedParams,
-      type: ConfigTypes.String,
     };
 
-    return <string>this._configMan.get(params, appOrExtName, this._logger);
+    return <string>(
+      this._configMan.get(
+        ConfigTypes.String,
+        params,
+        appOrExtName,
+        this._logger,
+      )
+    );
   }
 
   getConfigBool(
@@ -386,10 +393,16 @@ export class CNShell {
     let params = {
       ...DEFAULT_CONFIG_OPTIONS,
       ...passedParams,
-      type: ConfigTypes.Boolean,
     };
 
-    return <boolean>this._configMan.get(params, appOrExtName, this._logger);
+    return <boolean>(
+      this._configMan.get(
+        ConfigTypes.Boolean,
+        params,
+        appOrExtName,
+        this._logger,
+      )
+    );
   }
 
   getConfigNum(
@@ -399,10 +412,16 @@ export class CNShell {
     let params = {
       ...DEFAULT_CONFIG_OPTIONS,
       ...passedParams,
-      type: ConfigTypes.Number,
     };
 
-    return <number>this._configMan.get(params, appOrExtName, this._logger);
+    return <number>(
+      this._configMan.get(
+        ConfigTypes.Number,
+        params,
+        appOrExtName,
+        this._logger,
+      )
+    );
   }
 
   async healthcheckCallback(

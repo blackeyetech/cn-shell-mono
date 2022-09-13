@@ -5,7 +5,6 @@ import { CNShell, ConfigOptions } from "./cn-shell.js";
 export interface CNShellExtConfig {
   name: string;
   shell: CNShell;
-  extVersion: string;
 }
 
 // Misc consts here
@@ -18,18 +17,15 @@ export class CNShellExt {
   // Properties here
   private _name: string;
   private _shell: CNShell;
-  private _extVersion: string;
 
   // Constructor here
   constructor(config: CNShellExtConfig) {
     this._name = config.name;
     this._shell = config.shell;
-    this._extVersion = config.extVersion;
 
     this._shell.addExt(this);
 
     this.startup("Initialising ...");
-    this.startup(`Ext Version (${this._extVersion})`);
   }
 
   // Protected methods (that should be overridden) here
