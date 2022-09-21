@@ -1,0 +1,13 @@
+{
+  "extends": "../tsconfig.json" /* Our base tsconfig */,
+
+  "compilerOptions": {
+    "module": "ES2015" /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */,
+    "outDir": "./dist/mjs" /* Redirect output structure to the directory. */,
+    "tsBuildInfoFile": "./dist/tsconfig.mjs.tsbuildinfo",
+    "rootDir": ".",
+    "paths": {}
+  },
+
+  "include": ["src/**/*.ts"]
+}
