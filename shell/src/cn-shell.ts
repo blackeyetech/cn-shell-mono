@@ -1,10 +1,11 @@
 // imports here
 import { CNLogger, CNLogLevel } from "./cn-logger.js";
-import { CNShellExt, CNShellExtConfig } from "./cn-shell-ext.js";
 import { CNLoggerConsole } from "./cn-logger-console.js";
+import { CNShellExt, CNShellExtConfig } from "./cn-shell-ext.js";
 import { CNConfigMan, ConfigTypes, ConfigOptions } from "./cn-config-man.js";
 
 import shell from "shelljs";
+import { Pool } from "undici";
 
 import * as http from "node:http";
 import * as os from "node:os";
@@ -75,6 +76,9 @@ const DEFAULT_QUESTION_OPTIONS = {
   muteChar: "*",
 };
 
+export interface HttpReqPoolOptions extends Pool.Options {}
+export interface HttpReqOptions {}
+
 // CNShell class here
 export class CNShell {
   // Properties here
@@ -90,6 +94,7 @@ export class CNShell {
   private _healthCheckBadResCode: number;
 
   private _exts: CNShellExt[];
+  private _httpReqPools: { [key: string]: Pool };
 
   // Constructor here
   constructor(config: CNShellConfig) {
@@ -97,6 +102,7 @@ export class CNShell {
     this._appVersion = config.appVersion;
     this._configMan = new CNConfigMan();
     this._exts = [];
+    this._httpReqPools = {};
 
     // If a logger has been past in ...
     if (config.logger !== undefined) {
@@ -545,4 +551,20 @@ export class CNShell {
       });
     });
   }
+
+  createHttpReqPool(urlOrOrigin: string, options?: HttpReqOptions): void {
+    // We allow the origin to be an actual URL so let's pull the origin out
+    try {
+      let url = new URL(urlOrOrigin);
+
+      this.trace("Creating new HttpReq pool for (%s)", url.origin);
+      this._httpReqPools[url.origin] = new Pool(url.origin, options);
+    } catch (e: unknown) {
+      let msg = `(There is an issue with ${urlOrOrigin}) - (${e})`;
+      this.error(msg);
+      throw new Error(msg);
+    }
+  }
+
+  httpReq() {}
 }

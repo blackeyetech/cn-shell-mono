@@ -20,7 +20,7 @@ importers:
   extensions/jira:
     specifiers:
       "@types/node": ^14
-      cn-shell: workspace:^3.0.1
+      cn-shell: workspace:^3.0.2
     dependencies:
       cn-shell: link:../../shell
     devDependencies:
@@ -36,21 +36,23 @@ importers:
     specifiers:
       "@types/luxon": ^3.0.0
       "@types/minimist": ^1.2.2
-      "@types/node": ^14
+      "@types/node": ^16
       "@types/shelljs": ^0.8.11
       dotenv: ^16.0.1
       luxon: ^3.0.1
       minimist: ^1.2.6
       shelljs: ^0.8.5
+      undici: ^5.10.0
     dependencies:
+      "@types/node": 16.11.59
       dotenv: 16.0.1
       luxon: 3.0.2
       minimist: 1.2.6
       shelljs: 0.8.5
+      undici: 5.10.0
     devDependencies:
       "@types/luxon": 3.0.0
       "@types/minimist": 1.2.2
-      "@types/node": 14.18.28
       "@types/shelljs": 0.8.11
 
 packages:
@@ -481,6 +483,13 @@ packages:
         integrity: sha512-CK2fnrQlIgKlCV3N2kM+Gznb5USlwA1KFX3rJVHmgVk6NJxFPuQ86pAcvKnu37IA4BGlSRz7sEE1lHL1aLZ/eQ==,
       }
     dev: true
+
+  /@types/node/16.11.59:
+    resolution:
+      {
+        integrity: sha512-6u+36Dj3aDzhfBVUf/mfmc92OEdzQ2kx2jcXGdigfl70E/neV21ZHE6UCz4MDzTRcVqGAM27fk+DLXvyDsn3Jw==,
+      }
+    dev: false
 
   /@types/node/18.7.16:
     resolution:
@@ -1420,17 +1429,6 @@ packages:
       {
         integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==,
       }
-
-  /fsevents/2.3.2:
-    resolution:
-      {
-        integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==,
-      }
-    engines: { node: ^8.16.0 || ^10.6.0 || >=11.0.0 }
-    os: [darwin]
-    requiresBuild: true
-    dev: true
-    optional: true
 
   /function-bind/1.1.1:
     resolution:
@@ -3428,6 +3426,14 @@ packages:
       has-symbols: 1.0.3
       which-boxed-primitive: 1.0.2
     dev: true
+
+  /undici/5.10.0:
+    resolution:
+      {
+        integrity: sha512-c8HsD3IbwmjjbLvoZuRI26TZic+TSEe8FPMLLOkN1AfYRhdjnKBU6yL+IwcSCbdZiX4e5t0lfMDLDCqj4Sq70g==,
+      }
+    engines: { node: ">=12.18" }
+    dev: false
 
   /universalify/0.1.2:
     resolution:
