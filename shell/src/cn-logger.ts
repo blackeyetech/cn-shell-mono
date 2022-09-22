@@ -1,4 +1,4 @@
-import { DateTime } from "luxon";
+import dayjs from "dayjs";
 
 // Log levels
 export enum CNLogLevel {
@@ -60,10 +60,12 @@ export abstract class CNLogger {
       return "";
     }
 
-    if (this._logTimestampFormat === "") {
-      return DateTime.local().toISO();
+    let now = new Date();
+
+    if (this._logTimestampFormat === "ISO") {
+      return now.toISOString();
     }
 
-    return DateTime.local().toFormat(this._logTimestampFormat);
+    return dayjs(now).format(this._logTimestampFormat);
   }
 }

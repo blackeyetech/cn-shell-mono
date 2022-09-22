@@ -1,5 +1,5 @@
 {
-  "version": "3.0.2",
+  "version": "3.1.0",
   "name": "cn-shell",
   "description": "Cloud Native Shell",
   "main": "./dist/cjs/src/cn-shell.js",
@@ -34,7 +34,7 @@
     "prepublishOnly": "npm run format-js && npm test"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.0.0"
   },
   "keywords": [
     "Cloud",
@@ -46,14 +46,13 @@
   "author": "Black Eye Technology",
   "license": "MIT",
   "devDependencies": {
-    "@types/luxon": "^3.0.0",
     "@types/minimist": "^1.2.2",
+    "@types/node": "^16",
     "@types/shelljs": "^0.8.11"
   },
   "dependencies": {
-    "@types/node": "^16",
+    "dayjs": "^1.11.5",
     "dotenv": "^16.0.1",
-    "luxon": "^3.0.1",
     "minimist": "^1.2.6",
     "shelljs": "^0.8.5",
     "undici": "^5.10.0"

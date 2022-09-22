@@ -6,6 +6,7 @@ import { CNConfigMan, ConfigTypes, ConfigOptions } from "./cn-config-man.js";
 
 import shell from "shelljs";
 import { Pool } from "undici";
+import * as undici from "undici";
 
 import * as http from "node:http";
 import * as os from "node:os";
@@ -19,6 +20,7 @@ export {
   CNConfigMan,
   ConfigTypes,
   ConfigOptions,
+  undici,
 };
 
 // Config consts here
@@ -38,10 +40,12 @@ const CFG_HTTP_HEALTHCHECK_BAD_RES = "HTTP_HEALTHCHECK_BAD_RES";
 // Config defaults here
 const DEFAULT_LOG_LEVEL = "INFO";
 const DEFAULT_LOG_TIMESTAMP = "N";
+const DEFAULT_LOG_TIMESTAMP_FORMAT = "ISO";
 
 const DEFAULT_HTTP_KEEP_ALIVE_TIMEOUT = "65000";
 const DEFAULT_HTTP_HEADER_TIMEOUT = "66000";
 
+const DEFAULT_HTTP_HEALTHCHECK_INTERFACE = "";
 const DEFAULT_HTTP_HEALTHCHECK_PORT = "8080";
 const DEFAULT_HTTP_HEALTHCHECK_PATH = "/healthcheck";
 const DEFAULT_HTTP_HEALTHCHECK_GOOD_RES = "200";
@@ -63,7 +67,22 @@ const DEFAULT_CONFIG_OPTIONS = {
 export interface CNShellConfig {
   name: string;
   appVersion: string;
-  logger?: CNLogger;
+  log?: {
+    logger?: CNLogger;
+    level?: string; // string because it has to work like the env var
+    timestamp?: string; // "Y" or undefined - has to work like the env var
+    timestampFormat?: string;
+  };
+  http?: {
+    keepAliveTimeout?: number;
+    headerTimeout?: number;
+
+    healthcheckPort?: number;
+    healthcheckInterface?: string;
+    healthcheckPath?: string;
+    healthcheckGoodRes?: number;
+    healthcheckBadRes?: number;
+  };
 }
 
 export interface QuestionOptions {
@@ -77,7 +96,24 @@ const DEFAULT_QUESTION_OPTIONS = {
 };
 
 export interface HttpReqPoolOptions extends Pool.Options {}
-export interface HttpReqOptions {}
+
+const DEFAULT_HTTP_REQ_POOL_OPTIONS = {};
+
+export interface HttpReqOptions {
+  method: "GET" | "PUT" | "POST" | "DELETE" | "PATCH";
+  searchParams?: { [key: string]: string | string[] };
+  headers?: { [key: string]: string };
+  body?: object | string;
+  auth?: {
+    username: string;
+    password: string;
+  };
+  bearerToken?: string;
+}
+
+const DEFAULT_HTTP_REQ_OPTIONS = {
+  method: "GET",
+};
 
 // CNShell class here
 export class CNShell {
@@ -88,10 +124,16 @@ export class CNShell {
 
   private _logger: CNLogger;
 
-  private _healthcheckServer?: http.Server;
-  private _healthCheckPath?: string;
+  private _httpKeepAliveTimeout: number;
+  private _httpHeaderTimeout: number;
+
+  private _healthcheckPort: number;
+  private _healthcheckInterface: string;
+  private _healthCheckPath: string;
   private _healthCheckGoodResCode: number;
   private _healthCheckBadResCode: number;
+
+  private _healthcheckServer?: http.Server;
 
   private _exts: CNShellExt[];
   private _httpReqPools: { [key: string]: Pool };
@@ -105,18 +147,25 @@ export class CNShell {
     this._httpReqPools = {};
 
     // If a logger has been past in ...
-    if (config.logger !== undefined) {
+    if (config.log?.logger !== undefined) {
       // ... then use it
-      this._logger = config.logger;
+      this._logger = config.log.logger;
     } else {
       // ... otherwise create and use a console logger
       let logTimestamps = this.getConfigBool({
         config: CFG_LOG_TIMESTAMP,
-        defaultVal: DEFAULT_LOG_TIMESTAMP,
+        defaultVal:
+          config.log?.timestamp === undefined
+            ? DEFAULT_LOG_TIMESTAMP
+            : config.log.timestamp,
       });
 
       let logTimestampFormat = this.getConfigStr({
         config: CFG_LOG_TIMESTAMP_FORMAT,
+        defaultVal:
+          config.log?.timestampFormat === undefined
+            ? DEFAULT_LOG_TIMESTAMP_FORMAT
+            : config.log.timestampFormat,
       });
 
       this._logger = new CNLoggerConsole(
@@ -130,7 +179,8 @@ export class CNShell {
 
     let logLevel = this.getConfigStr({
       config: CFG_LOG_LEVEL,
-      defaultVal: DEFAULT_LOG_LEVEL,
+      defaultVal:
+        config.log?.level === undefined ? DEFAULT_LOG_LEVEL : config.log.level,
     });
 
     switch (logLevel.toUpperCase()) {
@@ -159,6 +209,62 @@ export class CNShell {
         );
         break;
     }
+
+    this._healthcheckInterface = this.getConfigStr({
+      config: CFG_HTTP_HEALTHCHECK_INTERFACE,
+      defaultVal:
+        config.http?.healthcheckInterface === undefined
+          ? DEFAULT_HTTP_HEALTHCHECK_INTERFACE
+          : config.http.healthcheckInterface,
+    });
+
+    this._healthcheckPort = this.getConfigNum({
+      config: CFG_HTTP_HEALTHCHECK_PORT,
+      defaultVal:
+        config.http?.healthcheckPort === undefined
+          ? DEFAULT_HTTP_HEALTHCHECK_PORT
+          : config.http.healthcheckPort.toString(),
+    });
+
+    this._httpKeepAliveTimeout = this.getConfigNum({
+      config: CFG_HTTP_KEEP_ALIVE_TIMEOUT,
+      defaultVal:
+        config.http?.keepAliveTimeout === undefined
+          ? DEFAULT_HTTP_KEEP_ALIVE_TIMEOUT
+          : config.http.keepAliveTimeout.toString(),
+    });
+
+    this._httpHeaderTimeout = this.getConfigNum({
+      config: CFG_HTTP_HEADER_TIMEOUT,
+      defaultVal:
+        config.http?.headerTimeout === undefined
+          ? DEFAULT_HTTP_HEADER_TIMEOUT
+          : config.http.headerTimeout.toString(),
+    });
+
+    this._healthCheckPath = this.getConfigStr({
+      config: CFG_HTTP_HEALTHCHECK_PATH,
+      defaultVal:
+        config.http?.healthcheckPath === undefined
+          ? DEFAULT_HTTP_HEALTHCHECK_PATH
+          : config.http.healthcheckPath,
+    });
+
+    this._healthCheckGoodResCode = this.getConfigNum({
+      config: CFG_HTTP_HEALTHCHECK_GOOD_RES,
+      defaultVal:
+        config.http?.healthcheckGoodRes === undefined
+          ? DEFAULT_HTTP_HEALTHCHECK_GOOD_RES
+          : config.http.healthcheckGoodRes.toString(),
+    });
+
+    this._healthCheckBadResCode = this.getConfigNum({
+      config: CFG_HTTP_HEALTHCHECK_BAD_RES,
+      defaultVal:
+        config.http?.healthcheckBadRes === undefined
+          ? DEFAULT_HTTP_HEALTHCHECK_BAD_RES
+          : config.http?.healthcheckBadRes?.toString(),
+    });
 
     this.startup("CNShell created!");
   }
@@ -208,18 +314,7 @@ export class CNShell {
 
   // Private methods here
   private setupHealthcheck(): void {
-    this._healthCheckGoodResCode = this.getConfigNum({
-      config: CFG_HTTP_HEALTHCHECK_GOOD_RES,
-      defaultVal: DEFAULT_HTTP_HEALTHCHECK_GOOD_RES,
-    });
-    this._healthCheckBadResCode = this.getConfigNum({
-      config: CFG_HTTP_HEALTHCHECK_BAD_RES,
-      defaultVal: DEFAULT_HTTP_HEALTHCHECK_BAD_RES,
-    });
-
-    let httpif = this.getConfigStr({ config: CFG_HTTP_HEALTHCHECK_INTERFACE });
-
-    if (httpif.length === 0) {
+    if (this._healthcheckInterface.length === 0) {
       this.startup(
         "No HTTP interface specified for healthcheck endpoint - healthcheck disabled!",
       );
@@ -228,65 +323,57 @@ export class CNShell {
 
     this.startup("Initialising healthcheck HTTP endpoint ...");
 
-    let port = this.getConfigNum({
-      config: CFG_HTTP_HEALTHCHECK_PORT,
-      defaultVal: DEFAULT_HTTP_HEALTHCHECK_PORT,
-    });
-
-    this.startup(`Finding IP for interface (${httpif})`);
+    this.startup(`Finding IP for interface (${this._healthcheckInterface})`);
 
     let ifaces = os.networkInterfaces();
     this.startup("Interfaces on host: %j", ifaces);
 
-    if (ifaces[httpif] === undefined) {
-      throw new Error(`${httpif} is not an interface on this server`);
+    if (ifaces[this._healthcheckInterface] === undefined) {
+      throw new Error(
+        `${this._healthcheckInterface} is not an interface on this server`,
+      );
     }
 
     let ip = "";
 
     // Search for the first I/F with a family of type IPv4
-    let found = ifaces[httpif]?.find((i) => i.family === "IPv4");
+    let found = ifaces[this._healthcheckInterface]?.find(
+      (i) => i.family === "IPv4",
+    );
     if (found !== undefined) {
       ip = found.address;
-      this.startup(`Found IP (${ip}) for interface ${httpif}`);
-      this.startup(`Will listen on interface ${httpif} (IP: ${ip})`);
+      this.startup(
+        `Found IP (${ip}) for interface ${this._healthcheckInterface}`,
+      );
+      this.startup(
+        `Will listen on interface ${this._healthcheckInterface} (IP: ${ip})`,
+      );
     }
 
     if (ip.length === 0) {
-      throw new Error(`${httpif} is not an interface on this server`);
+      throw new Error(
+        `${this._healthcheckInterface} is not an interface on this server`,
+      );
     }
 
-    this.startup(`Attempting to listen on (http://${ip}:${port})`);
-
-    let path = this.getConfigStr({
-      config: CFG_HTTP_HEALTHCHECK_PATH,
-      defaultVal: DEFAULT_HTTP_HEALTHCHECK_PATH,
-    });
-
-    this._healthCheckPath = path;
+    this.startup(
+      `Attempting to listen on (http://${ip}:${this._healthcheckPort})`,
+    );
 
     this._healthcheckServer = http
       .createServer((req, res) => this.healthcheckCallback(req, res))
-      .listen(port, ip);
+      .listen(this._healthcheckPort, ip);
 
     // NOTE: The default node keep alive is 5 secs. This needs to be set
     // higher then any load balancers in front of this CNA
-    let keepAlive = this.getConfigNum({
-      config: CFG_HTTP_KEEP_ALIVE_TIMEOUT,
-      defaultVal: DEFAULT_HTTP_KEEP_ALIVE_TIMEOUT,
-    });
 
-    this._healthcheckServer.keepAliveTimeout = keepAlive;
+    this._healthcheckServer.keepAliveTimeout = this._httpKeepAliveTimeout;
 
     // NOTE: There is a potential race condition and the recommended
     // solution is to make the header timeouts greater then the keep alive
     // timeout. See - https://github.com/nodejs/node/issues/27363
-    let timeout = this.getConfigNum({
-      config: CFG_HTTP_HEADER_TIMEOUT,
-      defaultVal: DEFAULT_HTTP_HEADER_TIMEOUT,
-    });
 
-    this._healthcheckServer.headersTimeout = timeout;
+    this._healthcheckServer.headersTimeout = this._httpHeaderTimeout;
 
     this.startup("Now listening. Healthcheck endpoint enabled!");
   }
@@ -331,7 +418,7 @@ export class CNShell {
       await this.startupError(testing);
     });
 
-    // NB: We should create the healhcheck HTTP endpoint AFTER we start the app
+    // NB: We have to create the healhcheck HTTP endpoint AFTER we start the app
     await this.setupHealthcheck();
 
     this.startup("Setting up event handler for SIGINT and SIGTERM");
@@ -362,6 +449,10 @@ export class CNShell {
       await ext.stop().catch((e) => {
         this.error(e);
       });
+    }
+
+    for (let origin in this._httpReqPools) {
+      this._httpReqPools[origin].destroy();
     }
 
     this.startup("So long and thanks for all the fish!");
@@ -552,19 +643,82 @@ export class CNShell {
     });
   }
 
-  createHttpReqPool(urlOrOrigin: string, options?: HttpReqOptions): void {
-    // We allow the origin to be an actual URL so let's pull the origin out
-    try {
-      let url = new URL(urlOrOrigin);
+  createHttpReqPool(origin: string, passedOptions?: HttpReqPoolOptions): Pool {
+    let options = {
+      ...DEFAULT_HTTP_REQ_POOL_OPTIONS,
+      ...passedOptions,
+    };
 
-      this.trace("Creating new HttpReq pool for (%s)", url.origin);
-      this._httpReqPools[url.origin] = new Pool(url.origin, options);
-    } catch (e: unknown) {
-      let msg = `(There is an issue with ${urlOrOrigin}) - (${e})`;
-      this.error(msg);
-      throw new Error(msg);
+    this.trace(
+      "Creating new HTTP pool for (%s) with options (%j)",
+      origin,
+      passedOptions,
+    );
+
+    if (this._httpReqPools[origin] !== undefined) {
+      throw new Error(`A HTTP pool already exists for ${origin}`);
     }
+
+    this._httpReqPools[origin] = new Pool(origin, options);
+
+    return this._httpReqPools[origin];
   }
 
-  httpReq() {}
+  async httpReq(origin: string, path: string, passedOptions?: HttpReqOptions) {
+    let options = {
+      ...DEFAULT_HTTP_REQ_OPTIONS,
+      ...passedOptions,
+    };
+
+    this.trace("httpReq for origin (%s) path (%s)", origin, path);
+
+    let pool = this._httpReqPools[origin];
+
+    // If the pool doesn't exist then create one for the origin with defaults
+    if (pool === undefined) {
+      pool = this.createHttpReqPool(origin);
+    }
+
+    let headers = options.headers === undefined ? {} : options.headers;
+
+    // If a bearer token is provided then add a Bearer auth header
+    if (options.bearerToken !== undefined) {
+      headers.Authorization = `Bearer ${options.bearerToken}`;
+    }
+
+    // If the basic auth creds are provided add a Basic auth header
+    if (options.auth !== undefined) {
+      let token = Buffer.from(
+        `${options.auth.username}:${options.auth.password}`,
+      ).toString("base64");
+      headers.Authorization = `Basic ${token}`;
+    }
+
+    let body: string | undefined;
+
+    if (options.body !== undefined) {
+      // If there is no content-type specifed then we assume
+      // this is a json payload, however if the body is an object
+      // then we know it is a json payload even if the
+      // content-type was set
+      if (
+        options.headers?.["Content-Type"] === undefined ||
+        typeof options.body === "object"
+      ) {
+        body = JSON.stringify(options.body);
+        headers["Content-Type"] = "application/json";
+      } else {
+        body = options.body;
+      }
+    }
+
+    await pool.request({
+      origin,
+      path,
+      method: <undici.Dispatcher.HttpMethod>options.method,
+      headers: options.headers,
+      query: options.searchParams,
+      body,
+    });
+  }
 }

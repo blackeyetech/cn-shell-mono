@@ -1,7 +1,7 @@
 {
   "version": "0.0.0",
   "name": "@cn-shell3/jira",
-  "description": "cn-shell extension for JIRA",
+  "description": "cn-shell v3 extension for JIRA",
   "main": "./dist/cjs/src/main.js",
   "module": "./dist/mjs/src/mainjs",
   "exports": {

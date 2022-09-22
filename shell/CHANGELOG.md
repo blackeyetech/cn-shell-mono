@@ -1,5 +1,16 @@
 # cn-shell
 
+## 3.1.0
+
+### Minor Changes
+
+- Added httpReq method
+
+### Patch Changes
+
+- You can now specify all CNA configs in the CNShellConfig object
+- Replaced luxon with dayjs for date formatting due to ES module issue
+
 ## 3.0.2
 
 ### Patch Changes
