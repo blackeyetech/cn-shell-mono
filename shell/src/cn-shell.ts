@@ -99,6 +99,13 @@ export interface HttpReqPoolOptions extends Pool.Options {}
 
 const DEFAULT_HTTP_REQ_POOL_OPTIONS = {};
 
+export interface HttpReqResponse {
+  statusCode: number;
+  headers: { [key: string]: string | string[] | undefined };
+  trailers: { [key: string]: string };
+  body: string | object;
+}
+
 export interface HttpReqOptions {
   method: "GET" | "PUT" | "POST" | "DELETE" | "PATCH";
   searchParams?: { [key: string]: string | string[] };
@@ -111,7 +118,7 @@ export interface HttpReqOptions {
   bearerToken?: string;
 }
 
-const DEFAULT_HTTP_REQ_OPTIONS = {
+const DEFAULT_HTTP_REQ_OPTIONS: HttpReqOptions = {
   method: "GET",
 };
 
@@ -643,7 +650,7 @@ export class CNShell {
     });
   }
 
-  createHttpReqPool(origin: string, passedOptions?: HttpReqPoolOptions): Pool {
+  createHttpReqPool(origin: string, passedOptions?: HttpReqPoolOptions): void {
     let options = {
       ...DEFAULT_HTTP_REQ_POOL_OPTIONS,
       ...passedOptions,
@@ -660,11 +667,13 @@ export class CNShell {
     }
 
     this._httpReqPools[origin] = new Pool(origin, options);
-
-    return this._httpReqPools[origin];
   }
 
-  async httpReq(origin: string, path: string, passedOptions?: HttpReqOptions) {
+  async httpReq(
+    origin: string,
+    path: string,
+    passedOptions?: HttpReqOptions,
+  ): Promise<HttpReqResponse> {
     let options = {
       ...DEFAULT_HTTP_REQ_OPTIONS,
       ...passedOptions,
@@ -676,7 +685,8 @@ export class CNShell {
 
     // If the pool doesn't exist then create one for the origin with defaults
     if (pool === undefined) {
-      pool = this.createHttpReqPool(origin);
+      this.createHttpReqPool(origin);
+      pool = this._httpReqPools[origin];
     }
 
     let headers = options.headers === undefined ? {} : options.headers;
@@ -696,29 +706,60 @@ export class CNShell {
 
     let body: string | undefined;
 
-    if (options.body !== undefined) {
+    if (options.body !== undefined && options.method !== "GET") {
       // If there is no content-type specifed then we assume
       // this is a json payload, however if the body is an object
       // then we know it is a json payload even if the
       // content-type was set
       if (
-        options.headers?.["Content-Type"] === undefined ||
+        options.headers?.["content-type"] === undefined ||
         typeof options.body === "object"
       ) {
+        headers["content-type"] = "application/json; charset=utf-8";
         body = JSON.stringify(options.body);
-        headers["Content-Type"] = "application/json";
       } else {
         body = options.body;
       }
     }
 
-    await pool.request({
+    let results = await pool.request({
       origin,
       path,
       method: <undici.Dispatcher.HttpMethod>options.method,
-      headers: options.headers,
+      headers,
       query: options.searchParams,
       body,
     });
+
+    let resData: object | string;
+
+    // Safest way to check for a body is the content-length header exists
+    // and is not "0" (no need to convert to a number)
+    let contentExists = false;
+    if (
+      results.headers["content-length"] !== undefined &&
+      results.headers["content-length"] !== "0"
+    ) {
+      contentExists = true;
+    }
+
+    // Only convert to json if there is content otherwise .json() will throw
+    if (
+      results.headers["content-type"]?.startsWith("application/json") &&
+      contentExists
+    ) {
+      resData = await results.body.json();
+    } else {
+      resData = await results.body.text();
+    }
+
+    let res: HttpReqResponse = {
+      statusCode: results.statusCode,
+      headers: results.headers,
+      trailers: results.trailers,
+      body: resData,
+    };
+
+    return res;
   }
 }

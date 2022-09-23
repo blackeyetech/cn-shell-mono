@@ -1,5 +1,11 @@
 # cn-shell
 
+## 3.1.1
+
+### Patch Changes
+
+- Fixed issue with httpReq when the body was empty
+
 ## 3.1.0
 
 ### Minor Changes

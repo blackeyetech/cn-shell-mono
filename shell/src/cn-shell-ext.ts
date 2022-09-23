@@ -1,5 +1,11 @@
 // imports here
-import { CNShell, ConfigOptions } from "./cn-shell.js";
+import {
+  CNShell,
+  ConfigOptions,
+  HttpReqPoolOptions,
+  HttpReqOptions,
+  HttpReqResponse,
+} from "./cn-shell.js";
 
 // Interfaces here
 export interface CNShellExtConfig {
@@ -110,5 +116,17 @@ export class CNShellExt {
 
   force(...args: any): void {
     this._shell.logger.force(this._name, ...args);
+  }
+
+  createHttpReqPool(origin: string, passedOptions?: HttpReqPoolOptions): void {
+    this._shell.createHttpReqPool(origin, passedOptions);
+  }
+
+  async httpReq(
+    origin: string,
+    path: string,
+    passedOptions?: HttpReqOptions,
+  ): Promise<HttpReqResponse> {
+    return this._shell.httpReq(origin, path, passedOptions);
   }
 }

@@ -1,0 +1,19 @@
+{
+  "name": "test",
+  "version": "1.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "prettier": {
+    "trailingComma": "all"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cn-shell": "workspace:^3.1.1",
+    "express": "^4.18.1"
+  }
+}
