@@ -19,12 +19,11 @@ importers:
 
   extensions/jira:
     specifiers:
-      "@types/node": ^14
-      cn-shell: workspace:^3.1.0
+      "@types/node": ^16
+      cn-shell: workspace:^3.1.1
     dependencies:
+      "@types/node": 16.11.59
       cn-shell: link:../../shell
-    devDependencies:
-      "@types/node": 14.18.29
 
   shell:
     specifiers:
@@ -470,19 +469,11 @@ packages:
       }
     dev: true
 
-  /@types/node/14.18.29:
-    resolution:
-      {
-        integrity: sha512-LhF+9fbIX4iPzhsRLpK5H7iPdvW8L4IwGciXQIOEcuF62+9nw/VQVsOViAOOGxY3OlOKGLFv0sWwJXdwQeTn6A==,
-      }
-    dev: true
-
   /@types/node/16.11.59:
     resolution:
       {
         integrity: sha512-6u+36Dj3aDzhfBVUf/mfmc92OEdzQ2kx2jcXGdigfl70E/neV21ZHE6UCz4MDzTRcVqGAM27fk+DLXvyDsn3Jw==,
       }
-    dev: true
 
   /@types/node/18.7.16:
     resolution:

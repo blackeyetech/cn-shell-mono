@@ -1,5 +1,5 @@
 // imports here
-import { CNLogger } from "./cn-logger.js";
+import { Logger } from "./logger.js";
 
 import dotenv from "dotenv";
 import minimist from "minimist";
@@ -32,8 +32,8 @@ const DEFAULT_CONFIG_OPTIONS = {
   envVarPrefix: "",
 };
 
-// CNConfigMan class here
-export class CNConfigMan {
+// ConfigMan class here
+export class ConfigMan {
   // Properties here
   private _minimist: minimist.ParsedArgs;
 
@@ -77,7 +77,7 @@ export class CNConfigMan {
     type: ConfigTypes,
     passedParams: ConfigOptions,
     appOrExtName: string = "",
-    logger?: CNLogger,
+    logger?: Logger,
   ): string | number | boolean {
     // Setup the defaults
     let params = {

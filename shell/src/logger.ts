@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 
 // Log levels
-export enum CNLogLevel {
+export enum LogLevel {
   LOG_COMPLETE_SILENCE = 0, // Nothing - not even fatals
   LOG_QUIET = 100, // Log nothing except fatals, errors and warnings
   LOG_INFO = 200, // Log info messages
@@ -10,9 +10,10 @@ export enum CNLogLevel {
   LOG_TRACE = 400, // Log trace messages
 }
 
-export abstract class CNLogger {
+// Logger class here
+export abstract class Logger {
   protected _name: string;
-  protected _level: CNLogLevel;
+  protected _level: LogLevel;
   protected _logTimestamps: boolean;
   protected _logTimestampFormat: string; // Empty string means use ISO format
 
@@ -47,7 +48,7 @@ export abstract class CNLogger {
   abstract trace(appOrExtName: string, ...args: any): void;
   abstract force(appOrExtName: string, ...args: any): void;
 
-  set level(level: CNLogLevel) {
+  set level(level: LogLevel) {
     this._level = level;
   }
 

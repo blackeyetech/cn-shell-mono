@@ -1,22 +1,24 @@
 // imports here
 import { CNShellExt, CNShellExtConfig } from "cn-shell";
 
-import { JiraResources } from "./jira-resource-url";
-
 // Jira config consts here
 const CFG_JIRA_SERVER = "JIRA_SERVER";
-
 const CFG_JIRA_USER = "JIRA_USER";
 const CFG_JIRA_PASSWORD = "JIRA_PASSWORD";
-
 const CFG_SESSION_REFRESH_PERIOD = "SESSION_REFRESH_PERIOD";
 
 const DEFAULT_SESSION_REFRESH_PERIOD = "60"; // In mins
 
-// process.on("unhandledRejection", error => {
-//   // Will print "unhandledRejection err is not defined"
-//   console.log("unhandledRejection", error);
-// });
+// Misc consts here
+const JiraResources = {
+  session: "/rest/auth/1/session",
+  field: "/rest/api/2/field",
+  project: "/rest/api/2/project",
+  issue: "/rest/api/2/issue",
+  createmeta: "/rest/api/2/issue/createmeta",
+  components: "/rest/api/2/project",
+  search: "/rest/api/2/search",
+};
 
 // Interfaces here
 export interface AuthDetails {
@@ -29,7 +31,7 @@ export interface FieldDict {
   byId: { [key: string]: { name: string; type: string; itemType: string } };
 }
 
-// CNJira class here
+// CNEJira class here
 export class CNEJira extends CNShellExt {
   // Properties here
   private _server: string;
@@ -40,7 +42,6 @@ export class CNEJira extends CNShellExt {
   private _refreshPeriod: number;
   private _timeout: NodeJS.Timeout;
 
-  private _resourceUrls: { [key: string]: string };
   private _fieldDict: FieldDict;
 
   // Constructor here
@@ -64,11 +65,7 @@ export class CNEJira extends CNShellExt {
     });
     this._refreshPeriod = period * 60 * 1000; // Convert to ms
 
-    // Prepend the server to the resources to make our life easier
-    this._resourceUrls = {};
-    for (let r in JiraResources) {
-      this._resourceUrls[r] = `${this._server}${JiraResources[r]}`;
-    }
+    // TODO: Do we need to create a httpReqPool??
   }
 
   // Abstract method implementations here
@@ -90,10 +87,9 @@ export class CNEJira extends CNShellExt {
   public async login(auth?: AuthDetails): Promise<void> {
     let url = this._resourceUrls.session;
 
-    let res = await this.httpReq({
-      method: "post",
-      url,
-      data: {
+    let res = await this.httpReq(this._server, JiraResources.session, {
+      method: "POST",
+      auth: {
         username: auth !== undefined ? auth.username : this._user,
         password: auth !== undefined ? auth.password : this._password,
       },

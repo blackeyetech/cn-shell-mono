@@ -1,13 +1,13 @@
 {
-  "version": "3.1.1",
+  "version": "3.2.0",
   "name": "cn-shell",
   "description": "Cloud Native Shell",
-  "main": "./dist/cjs/src/cn-shell.js",
-  "module": "./dist/mjs/src/cn-shell.js",
+  "main": "./dist/cjs/src/shell.js",
+  "module": "./dist/mjs/src/shell.js",
   "exports": {
     "node": {
-      "require": "./dist/cjs/src/cn-shell.js",
-      "import": "./dist/mjs/src/cn-shell.js"
+      "require": "./dist/cjs/src/shell.js",
+      "import": "./dist/mjs/src/shell.js"
     }
   },
   "bin": "",

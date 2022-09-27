@@ -1,8 +1,8 @@
 // imports here
-import { CNLogger, CNLogLevel } from "./cn-logger.js";
-import { CNLoggerConsole } from "./cn-logger-console.js";
-import { CNShellExt, CNShellExtConfig } from "./cn-shell-ext.js";
-import { CNConfigMan, ConfigTypes, ConfigOptions } from "./cn-config-man.js";
+import { Logger, LogLevel } from "./logger.js";
+import { LoggerConsole } from "./logger-console.js";
+import { ShellExt, ShellExtConfig } from "./shell-ext.js";
+import { ConfigMan, ConfigTypes, ConfigOptions } from "./config-man.js";
 
 import shell from "shelljs";
 import { Pool } from "undici";
@@ -13,11 +13,11 @@ import * as os from "node:os";
 import * as readline from "node:readline";
 
 export {
-  CNLogger,
-  CNLogLevel,
-  CNShellExt,
-  CNShellExtConfig,
-  CNConfigMan,
+  Logger,
+  LogLevel,
+  ShellExt,
+  ShellExtConfig,
+  ConfigMan,
   ConfigTypes,
   ConfigOptions,
   undici,
@@ -64,11 +64,11 @@ const DEFAULT_CONFIG_OPTIONS = {
 // enums here
 
 // Interfaces here
-export interface CNShellConfig {
+export interface ShellConfig {
   name: string;
   appVersion: string;
   log?: {
-    logger?: CNLogger;
+    logger?: Logger;
     level?: string; // string because it has to work like the env var
     timestamp?: string; // "Y" or undefined - has to work like the env var
     timestampFormat?: string;
@@ -122,14 +122,14 @@ const DEFAULT_HTTP_REQ_OPTIONS: HttpReqOptions = {
   method: "GET",
 };
 
-// CNShell class here
-export class CNShell {
+// Shell class here
+export class Shell {
   // Properties here
   private readonly _name: string;
   private readonly _appVersion: string;
-  private _configMan: CNConfigMan;
+  private _configMan: ConfigMan;
 
-  private _logger: CNLogger;
+  private _logger: Logger;
 
   private _httpKeepAliveTimeout: number;
   private _httpHeaderTimeout: number;
@@ -142,14 +142,14 @@ export class CNShell {
 
   private _healthcheckServer?: http.Server;
 
-  private _exts: CNShellExt[];
+  private _exts: ShellExt[];
   private _httpReqPools: { [key: string]: Pool };
 
   // Constructor here
-  constructor(config: CNShellConfig) {
+  constructor(config: ShellConfig) {
     this._name = config.name;
     this._appVersion = config.appVersion;
-    this._configMan = new CNConfigMan();
+    this._configMan = new ConfigMan();
     this._exts = [];
     this._httpReqPools = {};
 
@@ -175,7 +175,7 @@ export class CNShell {
             : config.log.timestampFormat,
       });
 
-      this._logger = new CNLoggerConsole(
+      this._logger = new LoggerConsole(
         config.name,
         logTimestamps,
         logTimestampFormat,
@@ -192,25 +192,25 @@ export class CNShell {
 
     switch (logLevel.toUpperCase()) {
       case "SILENT":
-        this._logger.level = CNLogLevel.LOG_COMPLETE_SILENCE;
+        this._logger.level = LogLevel.LOG_COMPLETE_SILENCE;
         break;
       case "QUIET":
-        this._logger.level = CNLogLevel.LOG_QUIET;
+        this._logger.level = LogLevel.LOG_QUIET;
         break;
       case "INFO":
-        this._logger.level = CNLogLevel.LOG_INFO;
+        this._logger.level = LogLevel.LOG_INFO;
         break;
       case "STARTUP":
-        this._logger.level = CNLogLevel.LOG_START_UP;
+        this._logger.level = LogLevel.LOG_START_UP;
         break;
       case "DEBUG":
-        this._logger.level = CNLogLevel.LOG_DEBUG;
+        this._logger.level = LogLevel.LOG_DEBUG;
         break;
       case "TRACE":
-        this._logger.level = CNLogLevel.LOG_TRACE;
+        this._logger.level = LogLevel.LOG_TRACE;
         break;
       default:
-        this._logger.level = CNLogLevel.LOG_INFO;
+        this._logger.level = LogLevel.LOG_INFO;
         this._logger.warn(
           `LogLevel ${logLevel} is unknown. Setting level to INFO.`,
         );
@@ -306,7 +306,7 @@ export class CNShell {
     return this._appVersion;
   }
 
-  get logger(): CNLogger {
+  get logger(): Logger {
     return this._logger;
   }
 
@@ -315,7 +315,7 @@ export class CNShell {
   }
 
   // Setters here
-  set level(level: CNLogLevel) {
+  set level(level: LogLevel) {
     this._logger.level = level;
   }
 
@@ -587,7 +587,7 @@ export class CNShell {
     this._logger.force(LOGGER_APP_NAME, ...args);
   }
 
-  addExt(ext: CNShellExt): void {
+  addExt(ext: ShellExt): void {
     this.startup(`Adding extension ${ext.name}`);
     this._exts.push(ext);
   }

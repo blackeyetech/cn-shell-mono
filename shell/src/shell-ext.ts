@@ -1,16 +1,16 @@
 // imports here
 import {
-  CNShell,
+  Shell,
   ConfigOptions,
   HttpReqPoolOptions,
   HttpReqOptions,
   HttpReqResponse,
-} from "./cn-shell.js";
+} from "./shell.js";
 
 // Interfaces here
-export interface CNShellExtConfig {
+export interface ShellExtConfig {
   name: string;
-  shell: CNShell;
+  shell: Shell;
 }
 
 // Misc consts here
@@ -18,14 +18,14 @@ const DEFAULT_CONFIG_OPTIONS = {
   envVarPrefix: "CNE_",
 };
 
-// CNShellExt class here
-export class CNShellExt {
+// ShellExt class here
+export class ShellExt {
   // Properties here
   private _name: string;
-  private _shell: CNShell;
+  private _shell: Shell;
 
   // Constructor here
-  constructor(config: CNShellExtConfig) {
+  constructor(config: ShellExtConfig) {
     this._name = config.name;
     this._shell = config.shell;
 

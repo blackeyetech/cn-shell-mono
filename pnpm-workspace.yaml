@@ -1,4 +1,4 @@
 packages:
   - "shell"
-  # - "testing"
-  # - "extensions/jira"
+  - "testing"
+  - "extensions/jira"

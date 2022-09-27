@@ -3,7 +3,7 @@
   "name": "@cn-shell3/jira",
   "description": "cn-shell v3 extension for JIRA",
   "main": "./dist/cjs/src/main.js",
-  "module": "./dist/mjs/src/mainjs",
+  "module": "./dist/mjs/src/main.js",
   "exports": {
     "node": {
       "require": "./dist/cjs/src/main.js",
@@ -34,7 +34,7 @@
     "prepublishOnly": "npm run format-js && npm test"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.0.0"
   },
   "keywords": [
     "Cloud",
@@ -46,9 +46,6 @@
   ],
   "author": "Black Eye Technology",
   "license": "MIT",
-  "devDependencies": {
-    "@types/node": "^14"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/blackeyetech/cn-shell-mono.git"
@@ -58,6 +55,7 @@
   },
   "homepage": "https://github.com/blackeyetech/cn-shell-mono/extensions/jira#readme",
   "dependencies": {
+    "@types/node": "^16",
     "cn-shell": "workspace:^3.1.1"
   }
 }

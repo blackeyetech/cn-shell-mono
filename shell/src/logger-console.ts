@@ -1,15 +1,16 @@
-import { CNLogger, CNLogLevel } from "./cn-logger.js";
+import { Logger, LogLevel } from "./logger.js";
 
 import * as util from "node:util";
 
-export class CNLoggerConsole extends CNLogger {
+// LoggerConsole class here
+export class LoggerConsole extends Logger {
   constructor(name: string, logTimestamps: boolean, timestampFormat: string) {
     super(name, logTimestamps, timestampFormat);
   }
 
   fatal(appOrExtName: string, ...args: any): void {
     // fatals are always logged unless level = LOG_COMPLETE_SILENCE
-    if (this._level > CNLogLevel.LOG_COMPLETE_SILENCE) {
+    if (this._level > LogLevel.LOG_COMPLETE_SILENCE) {
       let msg = util.format(
         `${this.timestamp()} FATAL: ${this._name}: ${appOrExtName}: ${args[0]}`,
         ...args.slice(1),
@@ -20,7 +21,7 @@ export class CNLoggerConsole extends CNLogger {
 
   error(appOrExtName: string, ...args: any): void {
     // errors are always logged unless level = LOG_COMPLETE_SILENCE
-    if (this._level > CNLogLevel.LOG_COMPLETE_SILENCE) {
+    if (this._level > LogLevel.LOG_COMPLETE_SILENCE) {
       let msg = util.format(
         `${this.timestamp()} ERROR: ${this._name}: ${appOrExtName}: ${args[0]}`,
         ...args.slice(1),
@@ -31,7 +32,7 @@ export class CNLoggerConsole extends CNLogger {
 
   warn(appOrExtName: string, ...args: any): void {
     // warnings are always logged unless level = LOG_COMPLETE_SILENCE
-    if (this._level > CNLogLevel.LOG_COMPLETE_SILENCE) {
+    if (this._level > LogLevel.LOG_COMPLETE_SILENCE) {
       let msg = util.format(
         `${this.timestamp()} WARN: ${this._name}: ${appOrExtName}: ${args[0]}`,
         ...args.slice(1),
@@ -41,7 +42,7 @@ export class CNLoggerConsole extends CNLogger {
   }
 
   info(appOrExtName: string, ...args: any): void {
-    if (this._level >= CNLogLevel.LOG_INFO) {
+    if (this._level >= LogLevel.LOG_INFO) {
       let msg = util.format(
         `${this.timestamp()} INFO: ${this._name}: ${appOrExtName}: ${args[0]}`,
         ...args.slice(1),
@@ -51,7 +52,7 @@ export class CNLoggerConsole extends CNLogger {
   }
 
   startup(appOrExtName: string, ...args: any): void {
-    if (this._level >= CNLogLevel.LOG_START_UP) {
+    if (this._level >= LogLevel.LOG_START_UP) {
       let msg = util.format(
         `${this.timestamp()} STARTUP: ${this._name}: ${appOrExtName}: ${
           args[0]
@@ -63,7 +64,7 @@ export class CNLoggerConsole extends CNLogger {
   }
 
   debug(appOrExtName: string, ...args: any): void {
-    if (this._level >= CNLogLevel.LOG_DEBUG) {
+    if (this._level >= LogLevel.LOG_DEBUG) {
       let msg = util.format(
         `${this.timestamp()} DEBUG: ${this._name}: ${appOrExtName}: ${args[0]}`,
         ...args.slice(1),
@@ -73,7 +74,7 @@ export class CNLoggerConsole extends CNLogger {
   }
 
   trace(appOrExtName: string, ...args: any): void {
-    if (this._level >= CNLogLevel.LOG_TRACE) {
+    if (this._level >= LogLevel.LOG_TRACE) {
       let msg = util.format(
         `${this.timestamp()} TRACE: ${this._name}: ${appOrExtName}: ${args[0]}`,
         ...args.slice(1),
