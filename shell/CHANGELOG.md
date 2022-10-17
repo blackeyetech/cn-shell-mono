@@ -1,5 +1,12 @@
 # cn-shell
 
+## 3.2.1
+
+### Patch Changes
+
+- Removed the "required" property for config options because it was confusing when supplying a default value
+- Added shelljs methods to cn-shell and removed the "sh" getter to make using the shelljs methods easier
+
 ## 3.2.0
 
 ### Minor Changes

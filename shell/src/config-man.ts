@@ -7,6 +7,13 @@ import minimist from "minimist";
 // Config consts here
 const CFG_DOTENV_PATH = "DOTENV_PATH";
 
+// Default configs here
+const DEFAULT_CONFIG_OPTIONS = {
+  silent: false,
+  redact: false,
+  envVarPrefix: "",
+};
+
 // enums here
 export enum ConfigTypes {
   String,
@@ -17,20 +24,11 @@ export enum ConfigTypes {
 // Interfaces here
 export interface ConfigOptions {
   config: string;
-  defaultVal?: string;
+  defaultVal?: string | boolean | number;
   silent?: boolean;
   redact?: boolean;
-  required?: boolean;
   envVarPrefix?: string;
 }
-
-const DEFAULT_CONFIG_OPTIONS = {
-  defaultVal: "",
-  silent: false,
-  redact: false,
-  required: false,
-  envVarPrefix: "",
-};
 
 // ConfigMan class here
 export class ConfigMan {
@@ -39,13 +37,16 @@ export class ConfigMan {
 
   // Constructor here
   constructor() {
+    // minimist parses the command line parameters - ignore first 2
     this._minimist = minimist(process.argv.slice(2));
 
+    // Check if the user has specified a .env path
     let dotenvPath = <string>this.get(ConfigTypes.String, {
       config: CFG_DOTENV_PATH,
+      defaultVal: "",
     });
 
-    // If there is a CFG_DOTENV_PATH ...
+    // If there is a .env path ...
     if (dotenvPath.length) {
       // .. then pass it to dotenv
       dotenv.config({ path: dotenvPath });
@@ -59,7 +60,7 @@ export class ConfigMan {
   ): number | string | boolean {
     switch (type) {
       case ConfigTypes.Number:
-        return parseInt(value, 10);
+        return parseInt(value);
       case ConfigTypes.Boolean:
         // Only accept y/Y to mean true
         if (value.toUpperCase() === "Y") {
@@ -67,7 +68,7 @@ export class ConfigMan {
         }
         return false;
       default:
-        // All that is left is String and this is already a string
+        // All that is left is String and this is already a string!
         return value;
     }
   }
@@ -75,67 +76,109 @@ export class ConfigMan {
   // Public methods here
   get(
     type: ConfigTypes,
-    passedParams: ConfigOptions,
+    passedOptions: ConfigOptions,
     appOrExtName: string = "",
     logger?: Logger,
   ): string | number | boolean {
     // Setup the defaults
-    let params = {
+    let options: ConfigOptions = {
       ...DEFAULT_CONFIG_OPTIONS,
-      ...passedParams,
+      ...passedOptions,
     };
 
     // Check the CLI first, i.e. CLI has higher precedence then env vars
     // NOTE: Always convert to lower case for the CLI
-    let cliParam = params.config.toLowerCase();
-    let value = this._minimist[cliParam];
+    let cliParams = options.config.toLowerCase();
+    let value = this._minimist[cliParams];
 
     if (value !== undefined) {
-      if (logger !== undefined && logger.started && params.silent === false) {
+      // We found it, not lets check if we can or should log that we found it
+      // NOTE: If we log it we want to indicate is was found on the CLI
+      if (logger !== undefined && logger.started && options.silent === false) {
         logger.startup(
           appOrExtName,
-          "CLI parameter (%s) = (%s)",
-          cliParam,
-          params.redact ? "redacted" : value,
+          "CLI parameter (%s) = (%j)",
+          cliParams,
+          options.redact ? "redacted" : value,
         );
       }
 
       // NOTE: Minimist does type conversions so no need to do it here, HOWEVER:
-      // it could confusion a numeric string to be a number so check for that
+      // it could confuse a numeric string to be a number so check for that
       if (type === ConfigTypes.String && typeof value === "number") {
         return value.toString();
+      }
+
+      // NOTE: We need to check if the value we got is NOT a string but we
+      // are expecting one. In this scenario we need to throw an error
+      if (type === ConfigTypes.String && typeof value !== "string") {
+        throw Error(`Config parameter (${options.config}) should be a string!`);
+      }
+
+      // NOTE: We need to check if the value we got is NOT a number but we
+      // are expecting one. In this scenario we need to throw an error
+      if (type === ConfigTypes.Number && typeof value !== "number") {
+        throw Error(`Config parameter (${options.config}) should be a number!`);
+      }
+
+      // NOTE: We need to check if the value we got is NOT a boolean but we
+      // are expecting one. In this scenario we need to throw an error
+      if (type === ConfigTypes.Boolean && typeof value !== "boolean") {
+        throw Error(
+          `Config parameter (${options.config}) should be a boolean!`,
+        );
       }
 
       return value;
     }
 
-    // OK it's not in the CLI so lets try the env vars
-    // NOTE: Alawys convert to upper case for env vars and prepend CNA_
-    let evar = `${params.envVarPrefix}${params.config.toUpperCase()}`;
+    // OK it's not in the CLI so lets check the env vars
+    // NOTE: Always convert to upper case for env vars and prepend the prefix
+    let evar = `${options.envVarPrefix}${options.config.toUpperCase()}`;
     value = process.env[evar];
 
-    // If env var doesn't exist then check what to do next
+    // If we found it then do a conversion here - env vars are always strings
+    if (value !== undefined) {
+      value = this.convertConfigValue(value, type);
+
+      // We found it, now lets check if we can or should log that we found it
+      // NOTE: If we log it we want to indicate is was found in an env var
+      if (logger !== undefined && logger.started && options.silent === false) {
+        logger.startup(
+          appOrExtName,
+          "Env var (%s) = (%j)",
+          evar,
+          options.redact ? "redacted" : value,
+        );
+      }
+    }
+
+    // If the value was not found in the env vars then use default provided
+    // NOTE: The default SHOULd have the correct type so do not do a conversion
     if (value === undefined) {
-      // Spit the dummy if it's required
-      if (params.required) {
+      // If the default was not provided then the config WAS required
+      if (options.defaultVal === undefined) {
+        // In this scenario we need to throw an error
         throw Error(
-          `Config parameter (${params.config}) not set on the CLI or as an env var!`,
+          `Config parameter (${options.config}) not set on the CLI or as an env var!`,
         );
       }
 
-      // Alls good, just use the default value
-      value = params.defaultVal;
+      // Otherwise use the default value
+      value = options.defaultVal;
+
+      // We found it, now lets check if we can or should log that we found it
+      // NOTE: If we log it we want to indicate is the default value
+      if (logger !== undefined && logger.started && options.silent === false) {
+        logger.startup(
+          appOrExtName,
+          "Default value used for (%s) = (%j)",
+          options.config,
+          options.redact ? "redacted" : value,
+        );
+      }
     }
 
-    if (logger !== undefined && logger.started && params.silent === false) {
-      logger.startup(
-        appOrExtName,
-        "Env var (%s) = (%s)",
-        evar,
-        params.redact ? "redacted" : value,
-      );
-    }
-
-    return this.convertConfigValue(value, type);
+    return value;
   }
 }

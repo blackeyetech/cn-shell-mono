@@ -4,7 +4,7 @@ import { LoggerConsole } from "./logger-console.js";
 import { ShellExt, ShellExtConfig } from "./shell-ext.js";
 import { ConfigMan, ConfigTypes, ConfigOptions } from "./config-man.js";
 
-import shell from "shelljs";
+import shelljs from "shelljs";
 import { Pool } from "undici";
 import * as undici from "undici";
 
@@ -37,31 +37,45 @@ const CFG_HTTP_HEALTHCHECK_PATH = "HTTP_HEALTHCHECK_PATH";
 const CFG_HTTP_HEALTHCHECK_GOOD_RES = "HTTP_HEALTHCHECK_GOOD_RES";
 const CFG_HTTP_HEALTHCHECK_BAD_RES = "HTTP_HEALTHCHECK_BAD_RES";
 
-// Config defaults here
-const DEFAULT_LOG_LEVEL = "INFO";
-const DEFAULT_LOG_TIMESTAMP = "N";
-const DEFAULT_LOG_TIMESTAMP_FORMAT = "ISO";
+// Default configs here
+const DEFAULT_SHELL_CONFIG = {
+  log: {
+    level: "INFO",
+    timestamp: false,
+    timestampFormat: "ISO",
+  },
+  http: {
+    keepAliveTimeout: 65000,
+    headerTimeout: 66000,
 
-const DEFAULT_HTTP_KEEP_ALIVE_TIMEOUT = "65000";
-const DEFAULT_HTTP_HEADER_TIMEOUT = "66000";
+    healthcheckPort: 8080,
+    healthcheckInterface: "",
+    healthcheckPath: "/healthcheck",
+    healthcheckGoodRes: 200,
+    healthcheckBadRes: 503,
+  },
+};
 
-const DEFAULT_HTTP_HEALTHCHECK_INTERFACE = "";
-const DEFAULT_HTTP_HEALTHCHECK_PORT = "8080";
-const DEFAULT_HTTP_HEALTHCHECK_PATH = "/healthcheck";
-const DEFAULT_HTTP_HEALTHCHECK_GOOD_RES = "200";
-const DEFAULT_HTTP_HEALTHCHECK_BAD_RES = "503";
+const DEFAULT_CONFIG_OPTIONS = {
+  envVarPrefix: "CNA_",
+};
+
+const DEFAULT_QUESTION_OPTIONS = {
+  muteAnswer: false,
+  muteChar: "*",
+};
+
+const DEFAULT_HTTP_REQ_POOL_OPTIONS = {};
+
+const DEFAULT_HTTP_REQ_OPTIONS: HttpReqOptions = {
+  method: "GET",
+};
 
 // Misc consts here
 const NODE_ENV =
   process.env.NODE_ENV === undefined ? "development" : process.env.NODE_ENV;
 
 const LOGGER_APP_NAME = "App";
-
-const DEFAULT_CONFIG_OPTIONS = {
-  envVarPrefix: "CNA_",
-};
-
-// enums here
 
 // Interfaces here
 export interface ShellConfig {
@@ -70,7 +84,7 @@ export interface ShellConfig {
   log?: {
     logger?: Logger;
     level?: string; // string because it has to work like the env var
-    timestamp?: string; // "Y" or undefined - has to work like the env var
+    timestamp?: boolean;
     timestampFormat?: string;
   };
   http?: {
@@ -90,14 +104,7 @@ export interface QuestionOptions {
   muteChar?: string;
 }
 
-const DEFAULT_QUESTION_OPTIONS = {
-  muteAnswer: false,
-  muteChar: "*",
-};
-
 export interface HttpReqPoolOptions extends Pool.Options {}
-
-const DEFAULT_HTTP_REQ_POOL_OPTIONS = {};
 
 export interface HttpReqResponse {
   statusCode: number;
@@ -117,10 +124,6 @@ export interface HttpReqOptions {
   };
   bearerToken?: string;
 }
-
-const DEFAULT_HTTP_REQ_OPTIONS: HttpReqOptions = {
-  method: "GET",
-};
 
 // Shell class here
 export class Shell {
@@ -145,13 +148,57 @@ export class Shell {
   private _exts: ShellExt[];
   private _httpReqPools: { [key: string]: Pool };
 
+  // These are public methods for acessing the shelljs methods
+  public cat = shelljs.cat;
+  public cd = shelljs.cd;
+  public chmod = shelljs.chmod;
+  public cp = shelljs.cp;
+  public dirs = shelljs.dirs;
+  public echo = shelljs.echo;
+  public env = shelljs.env;
+  public testError = shelljs.error;
+  public exec = shelljs.exec;
+  public find = shelljs.find;
+  public grep = shelljs.grep;
+  public head = shelljs.head;
+  public ln = shelljs.ln;
+  public ls = shelljs.ls;
+  public mkdir = shelljs.mkdir;
+  public mv = shelljs.mv;
+  public popd = shelljs.popd;
+  public pushd = shelljs.pushd;
+  public pwd = shelljs.pwd;
+  public rm = shelljs.rm;
+  public sed = shelljs.sed;
+  public set = shelljs.set;
+  public sort = shelljs.sort;
+  public tail = shelljs.tail;
+  public tempdir = shelljs.tempdir;
+  public touch = shelljs.touch;
+  public uniq = shelljs.uniq;
+
   // Constructor here
-  constructor(config: ShellConfig) {
+  constructor(passedConfig: ShellConfig) {
+    let config = {
+      name: passedConfig.name,
+      appVersion: passedConfig.appVersion,
+      http: {
+        ...DEFAULT_SHELL_CONFIG.http,
+        ...passedConfig.http,
+      },
+      log: {
+        ...DEFAULT_SHELL_CONFIG.log,
+        ...passedConfig.log,
+      },
+    };
+
     this._name = config.name;
     this._appVersion = config.appVersion;
     this._configMan = new ConfigMan();
     this._exts = [];
     this._httpReqPools = {};
+
+    this.ls = shelljs.ls;
 
     // If a logger has been past in ...
     if (config.log?.logger !== undefined) {
@@ -161,18 +208,12 @@ export class Shell {
       // ... otherwise create and use a console logger
       let logTimestamps = this.getConfigBool({
         config: CFG_LOG_TIMESTAMP,
-        defaultVal:
-          config.log?.timestamp === undefined
-            ? DEFAULT_LOG_TIMESTAMP
-            : config.log.timestamp,
+        defaultVal: config.log.timestamp,
       });
 
       let logTimestampFormat = this.getConfigStr({
         config: CFG_LOG_TIMESTAMP_FORMAT,
-        defaultVal:
-          config.log?.timestampFormat === undefined
-            ? DEFAULT_LOG_TIMESTAMP_FORMAT
-            : config.log.timestampFormat,
+        defaultVal: config.log.timestampFormat,
       });
 
       this._logger = new LoggerConsole(
@@ -186,8 +227,7 @@ export class Shell {
 
     let logLevel = this.getConfigStr({
       config: CFG_LOG_LEVEL,
-      defaultVal:
-        config.log?.level === undefined ? DEFAULT_LOG_LEVEL : config.log.level,
+      defaultVal: config.log.level,
     });
 
     switch (logLevel.toUpperCase()) {
@@ -219,61 +259,40 @@ export class Shell {
 
     this._healthcheckInterface = this.getConfigStr({
       config: CFG_HTTP_HEALTHCHECK_INTERFACE,
-      defaultVal:
-        config.http?.healthcheckInterface === undefined
-          ? DEFAULT_HTTP_HEALTHCHECK_INTERFACE
-          : config.http.healthcheckInterface,
+      defaultVal: config.http.healthcheckInterface,
     });
 
     this._healthcheckPort = this.getConfigNum({
       config: CFG_HTTP_HEALTHCHECK_PORT,
-      defaultVal:
-        config.http?.healthcheckPort === undefined
-          ? DEFAULT_HTTP_HEALTHCHECK_PORT
-          : config.http.healthcheckPort.toString(),
+      defaultVal: config.http.healthcheckPort,
     });
 
     this._httpKeepAliveTimeout = this.getConfigNum({
       config: CFG_HTTP_KEEP_ALIVE_TIMEOUT,
-      defaultVal:
-        config.http?.keepAliveTimeout === undefined
-          ? DEFAULT_HTTP_KEEP_ALIVE_TIMEOUT
-          : config.http.keepAliveTimeout.toString(),
+      defaultVal: config.http.keepAliveTimeout,
     });
 
     this._httpHeaderTimeout = this.getConfigNum({
       config: CFG_HTTP_HEADER_TIMEOUT,
-      defaultVal:
-        config.http?.headerTimeout === undefined
-          ? DEFAULT_HTTP_HEADER_TIMEOUT
-          : config.http.headerTimeout.toString(),
+      defaultVal: config.http.headerTimeout,
     });
 
     this._healthCheckPath = this.getConfigStr({
       config: CFG_HTTP_HEALTHCHECK_PATH,
-      defaultVal:
-        config.http?.healthcheckPath === undefined
-          ? DEFAULT_HTTP_HEALTHCHECK_PATH
-          : config.http.healthcheckPath,
+      defaultVal: config.http.healthcheckPath,
     });
 
     this._healthCheckGoodResCode = this.getConfigNum({
       config: CFG_HTTP_HEALTHCHECK_GOOD_RES,
-      defaultVal:
-        config.http?.healthcheckGoodRes === undefined
-          ? DEFAULT_HTTP_HEALTHCHECK_GOOD_RES
-          : config.http.healthcheckGoodRes.toString(),
+      defaultVal: config.http.healthcheckGoodRes,
     });
 
     this._healthCheckBadResCode = this.getConfigNum({
       config: CFG_HTTP_HEALTHCHECK_BAD_RES,
-      defaultVal:
-        config.http?.healthcheckBadRes === undefined
-          ? DEFAULT_HTTP_HEALTHCHECK_BAD_RES
-          : config.http?.healthcheckBadRes?.toString(),
+      defaultVal: config.http.healthcheckBadRes,
     });
 
-    this.startup("CNShell created!");
+    this.startup("Shell created!");
   }
 
   // Protected methods (that should be overridden) here
@@ -308,10 +327,6 @@ export class Shell {
 
   get logger(): Logger {
     return this._logger;
-  }
-
-  get sh() {
-    return shell;
   }
 
   // Setters here
@@ -385,16 +400,16 @@ export class Shell {
     this.startup("Now listening. Healthcheck endpoint enabled!");
   }
 
-  private async startupError(testing: boolean) {
+  private async startupError(code: number, testing: boolean) {
     this.error("Heuston, we have a problem. Shutting down now ...");
 
     if (testing) {
       // Do a soft stop so we don't force any testing code to exit
-      await this.exit(false);
+      await this.exit(code, false);
       return;
     }
 
-    await this.exit();
+    await this.exit(code);
   }
 
   // Public methods here
@@ -412,7 +427,7 @@ export class Shell {
         this.error(e);
 
         // This will exit the app
-        await this.startupError(testing);
+        await this.startupError(-1, testing);
       });
     }
 
@@ -422,20 +437,20 @@ export class Shell {
       this.error(e);
 
       // This will exit the app
-      await this.startupError(testing);
+      await this.startupError(-1, testing);
     });
 
     // NB: We have to create the healhcheck HTTP endpoint AFTER we start the app
     await this.setupHealthcheck();
 
     this.startup("Setting up event handler for SIGINT and SIGTERM");
-    process.on("SIGINT", async () => await this.exit());
-    process.on("SIGTERM", async () => await this.exit());
+    process.on("SIGINT", async () => await this.exit(0));
+    process.on("SIGTERM", async () => await this.exit(0));
 
     this.startup("Ready to Rock and Roll baby!");
   }
 
-  async exit(hard: boolean = true): Promise<void> {
+  async exit(code: number, hard: boolean = true): Promise<void> {
     this.startup("Exiting ...");
 
     if (this._healthcheckServer !== undefined) {
@@ -466,24 +481,25 @@ export class Shell {
 
     this._logger.stop();
 
+    // Check if the exit should also exit the process (a hard stop)
     if (hard) {
-      process.exit();
+      process.exit(code);
     }
   }
 
   getConfigStr(
-    passedParams: ConfigOptions,
+    passedOptions: ConfigOptions,
     appOrExtName = LOGGER_APP_NAME,
   ): string {
-    let params = {
+    let options: ConfigOptions = {
       ...DEFAULT_CONFIG_OPTIONS,
-      ...passedParams,
+      ...passedOptions,
     };
 
     return <string>(
       this._configMan.get(
         ConfigTypes.String,
-        params,
+        options,
         appOrExtName,
         this._logger,
       )
@@ -491,18 +507,18 @@ export class Shell {
   }
 
   getConfigBool(
-    passedParams: ConfigOptions,
+    passedOptions: ConfigOptions,
     appOrExtName = LOGGER_APP_NAME,
   ): boolean {
-    let params = {
+    let options: ConfigOptions = {
       ...DEFAULT_CONFIG_OPTIONS,
-      ...passedParams,
+      ...passedOptions,
     };
 
     return <boolean>(
       this._configMan.get(
         ConfigTypes.Boolean,
-        params,
+        options,
         appOrExtName,
         this._logger,
       )
@@ -510,18 +526,18 @@ export class Shell {
   }
 
   getConfigNum(
-    passedParams: ConfigOptions,
+    passedOptions: ConfigOptions,
     appOrExtName = LOGGER_APP_NAME,
   ): number {
-    let params = {
+    let options: ConfigOptions = {
       ...DEFAULT_CONFIG_OPTIONS,
-      ...passedParams,
+      ...passedOptions,
     };
 
     return <number>(
       this._configMan.get(
         ConfigTypes.Number,
-        params,
+        options,
         appOrExtName,
         this._logger,
       )
@@ -745,12 +761,20 @@ export class Shell {
 
     // Only convert to json if there is content otherwise .json() will throw
     if (
-      results.headers["content-type"]?.startsWith("application/json") &&
-      contentExists
+      contentExists &&
+      results.headers["content-type"]?.startsWith("application/json") === true
     ) {
       resData = await results.body.json();
     } else {
       resData = await results.body.text();
+      // If the string has length then let's check the content-type again for
+      // json data - sometimes the server isn't setting the content-length ...
+      if (
+        resData.length &&
+        results.headers["content-type"]?.startsWith("application/json") === true
+      ) {
+        resData = JSON.parse(resData);
+      }
     }
 
     let res: HttpReqResponse = {

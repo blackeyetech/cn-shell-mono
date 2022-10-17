@@ -7,16 +7,16 @@ import {
   HttpReqResponse,
 } from "./shell.js";
 
+// Default configs here
+const DEFAULT_CONFIG_OPTIONS = {
+  envVarPrefix: "CNE_",
+};
+
 // Interfaces here
 export interface ShellExtConfig {
   name: string;
   shell: Shell;
 }
-
-// Misc consts here
-const DEFAULT_CONFIG_OPTIONS = {
-  envVarPrefix: "CNE_",
-};
 
 // ShellExt class here
 export class ShellExt {
@@ -59,31 +59,31 @@ export class ShellExt {
   // Private methods here
 
   // Public methods here
-  getConfigStr(passedParams: ConfigOptions): string {
-    let params = {
+  getConfigStr(passedOptions: ConfigOptions): string {
+    let options: ConfigOptions = {
       ...DEFAULT_CONFIG_OPTIONS,
-      ...passedParams,
+      ...passedOptions,
     };
 
-    return this._shell.getConfigStr(params, this._name);
+    return this._shell.getConfigStr(options, this._name);
   }
 
-  getConfigBool(passedParams: ConfigOptions): boolean {
-    let params = {
+  getConfigBool(passedOptions: ConfigOptions): boolean {
+    let options: ConfigOptions = {
       ...DEFAULT_CONFIG_OPTIONS,
-      ...passedParams,
+      ...passedOptions,
     };
 
-    return this._shell.getConfigBool(params, this._name);
+    return this._shell.getConfigBool(options, this._name);
   }
 
-  getConfigNum(passedParams: ConfigOptions): number {
-    let params = {
+  getConfigNum(passedOptions: ConfigOptions): number {
+    let options: ConfigOptions = {
       ...DEFAULT_CONFIG_OPTIONS,
-      ...passedParams,
+      ...passedOptions,
     };
 
-    return this._shell.getConfigNum(params, this._name);
+    return this._shell.getConfigNum(options, this._name);
   }
 
   fatal(...args: any): void {
