@@ -2,5 +2,5 @@ packages:
   - "shell"
   # - "extensions/jira"
   # - "extensions/salesforce"
-  # - "extensions/netbox"
+  - "extensions/netbox"
   # - "testing"
