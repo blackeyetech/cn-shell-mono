@@ -12,7 +12,7 @@ export class LoggerConsole extends Logger {
     // fatals are always logged unless level = LOG_COMPLETE_SILENCE
     if (this._level > LogLevel.LOG_COMPLETE_SILENCE) {
       let msg = util.format(
-        `${this.timestamp()} FATAL: ${this._name}: ${appOrExtName}: ${args[0]}`,
+        `${this.timestamp()}FATAL: ${this._name}: ${appOrExtName}: ${args[0]}`,
         ...args.slice(1),
       );
       console.error(msg);
@@ -23,7 +23,7 @@ export class LoggerConsole extends Logger {
     // errors are always logged unless level = LOG_COMPLETE_SILENCE
     if (this._level > LogLevel.LOG_COMPLETE_SILENCE) {
       let msg = util.format(
-        `${this.timestamp()} ERROR: ${this._name}: ${appOrExtName}: ${args[0]}`,
+        `${this.timestamp()}ERROR: ${this._name}: ${appOrExtName}: ${args[0]}`,
         ...args.slice(1),
       );
       console.error(msg);
@@ -34,7 +34,7 @@ export class LoggerConsole extends Logger {
     // warnings are always logged unless level = LOG_COMPLETE_SILENCE
     if (this._level > LogLevel.LOG_COMPLETE_SILENCE) {
       let msg = util.format(
-        `${this.timestamp()} WARN: ${this._name}: ${appOrExtName}: ${args[0]}`,
+        `${this.timestamp()}WARN: ${this._name}: ${appOrExtName}: ${args[0]}`,
         ...args.slice(1),
       );
       console.warn(msg);
@@ -44,7 +44,7 @@ export class LoggerConsole extends Logger {
   info(appOrExtName: string, ...args: any): void {
     if (this._level >= LogLevel.LOG_INFO) {
       let msg = util.format(
-        `${this.timestamp()} INFO: ${this._name}: ${appOrExtName}: ${args[0]}`,
+        `${this.timestamp()}INFO: ${this._name}: ${appOrExtName}: ${args[0]}`,
         ...args.slice(1),
       );
       console.info(msg);
@@ -54,7 +54,7 @@ export class LoggerConsole extends Logger {
   startup(appOrExtName: string, ...args: any): void {
     if (this._level >= LogLevel.LOG_START_UP) {
       let msg = util.format(
-        `${this.timestamp()} STARTUP: ${this._name}: ${appOrExtName}: ${
+        `${this.timestamp()}STARTUP: ${this._name}: ${appOrExtName}: ${
           args[0]
         }`,
         ...args.slice(1),
@@ -66,7 +66,7 @@ export class LoggerConsole extends Logger {
   debug(appOrExtName: string, ...args: any): void {
     if (this._level >= LogLevel.LOG_DEBUG) {
       let msg = util.format(
-        `${this.timestamp()} DEBUG: ${this._name}: ${appOrExtName}: ${args[0]}`,
+        `${this.timestamp()}DEBUG: ${this._name}: ${appOrExtName}: ${args[0]}`,
         ...args.slice(1),
       );
       console.info(msg);
@@ -76,7 +76,7 @@ export class LoggerConsole extends Logger {
   trace(appOrExtName: string, ...args: any): void {
     if (this._level >= LogLevel.LOG_TRACE) {
       let msg = util.format(
-        `${this.timestamp()} TRACE: ${this._name}: ${appOrExtName}: ${args[0]}`,
+        `${this.timestamp()}TRACE: ${this._name}: ${appOrExtName}: ${args[0]}`,
         ...args.slice(1),
       );
       console.info(msg);
@@ -86,7 +86,7 @@ export class LoggerConsole extends Logger {
   force(appOrExtName: string, ...args: any): void {
     // forces are always logged even if level == LOG_COMPLETE_SILENCE
     let msg = util.format(
-      `${this.timestamp()} FORCED: ${this._name}: ${appOrExtName}: ${args[0]}`,
+      `${this.timestamp()}FORCED: ${this._name}: ${appOrExtName}: ${args[0]}`,
       ...args.slice(1),
     );
     console.error(msg);

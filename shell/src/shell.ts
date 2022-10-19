@@ -39,6 +39,7 @@ const CFG_HTTP_HEALTHCHECK_BAD_RES = "HTTP_HEALTHCHECK_BAD_RES";
 
 // Default configs here
 const DEFAULT_SHELL_CONFIG = {
+  appVersion: "N/A",
   log: {
     level: "INFO",
     timestamp: false,
@@ -80,7 +81,7 @@ const LOGGER_APP_NAME = "App";
 // Interfaces here
 export interface ShellConfig {
   name: string;
-  appVersion: string;
+  appVersion?: string;
   log?: {
     logger?: Logger;
     level?: string; // string because it has to work like the env var
@@ -181,7 +182,10 @@ export class Shell {
   constructor(passedConfig: ShellConfig) {
     let config = {
       name: passedConfig.name,
-      appVersion: passedConfig.appVersion,
+      appVersion:
+        passedConfig.appVersion === undefined
+          ? DEFAULT_SHELL_CONFIG.appVersion
+          : passedConfig.appVersion,
       http: {
         ...DEFAULT_SHELL_CONFIG.http,
         ...passedConfig.http,
@@ -206,13 +210,11 @@ export class Shell {
       this._logger = config.log.logger;
     } else {
       // ... otherwise create and use a console logger
-      let logTimestamps = this.getConfigBool({
-        config: CFG_LOG_TIMESTAMP,
+      let logTimestamps = this.getConfigBool(CFG_LOG_TIMESTAMP, {
         defaultVal: config.log.timestamp,
       });
 
-      let logTimestampFormat = this.getConfigStr({
-        config: CFG_LOG_TIMESTAMP_FORMAT,
+      let logTimestampFormat = this.getConfigStr(CFG_LOG_TIMESTAMP_FORMAT, {
         defaultVal: config.log.timestampFormat,
       });
 
@@ -225,8 +227,7 @@ export class Shell {
 
     this._logger.start();
 
-    let logLevel = this.getConfigStr({
-      config: CFG_LOG_LEVEL,
+    let logLevel = this.getConfigStr(CFG_LOG_LEVEL, {
       defaultVal: config.log.level,
     });
 
@@ -257,40 +258,37 @@ export class Shell {
         break;
     }
 
-    this._healthcheckInterface = this.getConfigStr({
-      config: CFG_HTTP_HEALTHCHECK_INTERFACE,
-      defaultVal: config.http.healthcheckInterface,
-    });
+    this._healthcheckInterface = this.getConfigStr(
+      CFG_HTTP_HEALTHCHECK_INTERFACE,
+      { defaultVal: config.http.healthcheckInterface },
+    );
 
-    this._healthcheckPort = this.getConfigNum({
-      config: CFG_HTTP_HEALTHCHECK_PORT,
+    this._healthcheckPort = this.getConfigNum(CFG_HTTP_HEALTHCHECK_PORT, {
       defaultVal: config.http.healthcheckPort,
     });
 
-    this._httpKeepAliveTimeout = this.getConfigNum({
-      config: CFG_HTTP_KEEP_ALIVE_TIMEOUT,
-      defaultVal: config.http.keepAliveTimeout,
-    });
+    this._httpKeepAliveTimeout = this.getConfigNum(
+      CFG_HTTP_KEEP_ALIVE_TIMEOUT,
+      { defaultVal: config.http.keepAliveTimeout },
+    );
 
-    this._httpHeaderTimeout = this.getConfigNum({
-      config: CFG_HTTP_HEADER_TIMEOUT,
+    this._httpHeaderTimeout = this.getConfigNum(CFG_HTTP_HEADER_TIMEOUT, {
       defaultVal: config.http.headerTimeout,
     });
 
-    this._healthCheckPath = this.getConfigStr({
-      config: CFG_HTTP_HEALTHCHECK_PATH,
+    this._healthCheckPath = this.getConfigStr(CFG_HTTP_HEALTHCHECK_PATH, {
       defaultVal: config.http.healthcheckPath,
     });
 
-    this._healthCheckGoodResCode = this.getConfigNum({
-      config: CFG_HTTP_HEALTHCHECK_GOOD_RES,
-      defaultVal: config.http.healthcheckGoodRes,
-    });
+    this._healthCheckGoodResCode = this.getConfigNum(
+      CFG_HTTP_HEALTHCHECK_GOOD_RES,
+      { defaultVal: config.http.healthcheckGoodRes },
+    );
 
-    this._healthCheckBadResCode = this.getConfigNum({
-      config: CFG_HTTP_HEALTHCHECK_BAD_RES,
-      defaultVal: config.http.healthcheckBadRes,
-    });
+    this._healthCheckBadResCode = this.getConfigNum(
+      CFG_HTTP_HEALTHCHECK_BAD_RES,
+      { defaultVal: config.http.healthcheckBadRes },
+    );
 
     this.startup("Shell created!");
   }
@@ -488,7 +486,8 @@ export class Shell {
   }
 
   getConfigStr(
-    passedOptions: ConfigOptions,
+    config: string,
+    passedOptions: ConfigOptions = {},
     appOrExtName = LOGGER_APP_NAME,
   ): string {
     let options: ConfigOptions = {
@@ -498,6 +497,7 @@ export class Shell {
 
     return <string>(
       this._configMan.get(
+        config,
         ConfigTypes.String,
         options,
         appOrExtName,
@@ -507,7 +507,8 @@ export class Shell {
   }
 
   getConfigBool(
-    passedOptions: ConfigOptions,
+    config: string,
+    passedOptions: ConfigOptions = {},
     appOrExtName = LOGGER_APP_NAME,
   ): boolean {
     let options: ConfigOptions = {
@@ -517,6 +518,7 @@ export class Shell {
 
     return <boolean>(
       this._configMan.get(
+        config,
         ConfigTypes.Boolean,
         options,
         appOrExtName,
@@ -526,7 +528,8 @@ export class Shell {
   }
 
   getConfigNum(
-    passedOptions: ConfigOptions,
+    config: string,
+    passedOptions: ConfigOptions = {},
     appOrExtName = LOGGER_APP_NAME,
   ): number {
     let options: ConfigOptions = {
@@ -536,6 +539,7 @@ export class Shell {
 
     return <number>(
       this._configMan.get(
+        config,
         ConfigTypes.Number,
         options,
         appOrExtName,

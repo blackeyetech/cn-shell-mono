@@ -67,6 +67,7 @@ export abstract class Logger {
       return now.toISOString();
     }
 
-    return dayjs(now).format(this._logTimestampFormat);
+    // Make sure to add a trailing space!
+    return `${dayjs(now).format(this._logTimestampFormat)} `;
   }
 }

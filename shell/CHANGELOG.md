@@ -1,5 +1,19 @@
 # cn-shell
 
+## 3.3.0
+
+### Minor Changes
+
+- Changed config methods to take the config string
+
+### Patch Changes
+
+- Removed leading space on log entries that have no timestamp
+
+  Added status code to exit() method
+
+  Changed appVersion in Shell constructor to default to "N/A"
+
 ## 3.2.1
 
 ### Patch Changes

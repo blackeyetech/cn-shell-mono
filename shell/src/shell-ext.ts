@@ -59,31 +59,31 @@ export class ShellExt {
   // Private methods here
 
   // Public methods here
-  getConfigStr(passedOptions: ConfigOptions): string {
+  getConfigStr(config: string, passedOptions: ConfigOptions = {}): string {
     let options: ConfigOptions = {
       ...DEFAULT_CONFIG_OPTIONS,
       ...passedOptions,
     };
 
-    return this._shell.getConfigStr(options, this._name);
+    return this._shell.getConfigStr(config, options, this._name);
   }
 
-  getConfigBool(passedOptions: ConfigOptions): boolean {
+  getConfigBool(config: string, passedOptions: ConfigOptions = {}): boolean {
     let options: ConfigOptions = {
       ...DEFAULT_CONFIG_OPTIONS,
       ...passedOptions,
     };
 
-    return this._shell.getConfigBool(options, this._name);
+    return this._shell.getConfigBool(config, options, this._name);
   }
 
-  getConfigNum(passedOptions: ConfigOptions): number {
+  getConfigNum(config: string, passedOptions: ConfigOptions = {}): number {
     let options: ConfigOptions = {
       ...DEFAULT_CONFIG_OPTIONS,
       ...passedOptions,
     };
 
-    return this._shell.getConfigNum(options, this._name);
+    return this._shell.getConfigNum(config, options, this._name);
   }
 
   fatal(...args: any): void {

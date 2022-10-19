@@ -23,7 +23,6 @@ export enum ConfigTypes {
 
 // Interfaces here
 export interface ConfigOptions {
-  config: string;
   defaultVal?: string | boolean | number;
   silent?: boolean;
   redact?: boolean;
@@ -41,8 +40,7 @@ export class ConfigMan {
     this._minimist = minimist(process.argv.slice(2));
 
     // Check if the user has specified a .env path
-    let dotenvPath = <string>this.get(ConfigTypes.String, {
-      config: CFG_DOTENV_PATH,
+    let dotenvPath = <string>this.get(CFG_DOTENV_PATH, ConfigTypes.String, {
       defaultVal: "",
     });
 
@@ -75,8 +73,9 @@ export class ConfigMan {
 
   // Public methods here
   get(
+    config: string,
     type: ConfigTypes,
-    passedOptions: ConfigOptions,
+    passedOptions: ConfigOptions = {},
     appOrExtName: string = "",
     logger?: Logger,
   ): string | number | boolean {
@@ -88,7 +87,7 @@ export class ConfigMan {
 
     // Check the CLI first, i.e. CLI has higher precedence then env vars
     // NOTE: Always convert to lower case for the CLI
-    let cliParams = options.config.toLowerCase();
+    let cliParams = config.toLowerCase();
     let value = this._minimist[cliParams];
 
     if (value !== undefined) {
@@ -112,21 +111,19 @@ export class ConfigMan {
       // NOTE: We need to check if the value we got is NOT a string but we
       // are expecting one. In this scenario we need to throw an error
       if (type === ConfigTypes.String && typeof value !== "string") {
-        throw Error(`Config parameter (${options.config}) should be a string!`);
+        throw Error(`Config parameter (${config}) should be a string!`);
       }
 
       // NOTE: We need to check if the value we got is NOT a number but we
       // are expecting one. In this scenario we need to throw an error
       if (type === ConfigTypes.Number && typeof value !== "number") {
-        throw Error(`Config parameter (${options.config}) should be a number!`);
+        throw Error(`Config parameter (${config}) should be a number!`);
       }
 
       // NOTE: We need to check if the value we got is NOT a boolean but we
       // are expecting one. In this scenario we need to throw an error
       if (type === ConfigTypes.Boolean && typeof value !== "boolean") {
-        throw Error(
-          `Config parameter (${options.config}) should be a boolean!`,
-        );
+        throw Error(`Config parameter (${config}) should be a boolean!`);
       }
 
       return value;
@@ -134,7 +131,7 @@ export class ConfigMan {
 
     // OK it's not in the CLI so lets check the env vars
     // NOTE: Always convert to upper case for env vars and prepend the prefix
-    let evar = `${options.envVarPrefix}${options.config.toUpperCase()}`;
+    let evar = `${options.envVarPrefix}${config.toUpperCase()}`;
     value = process.env[evar];
 
     // If we found it then do a conversion here - env vars are always strings
@@ -160,7 +157,7 @@ export class ConfigMan {
       if (options.defaultVal === undefined) {
         // In this scenario we need to throw an error
         throw Error(
-          `Config parameter (${options.config}) not set on the CLI or as an env var!`,
+          `Config parameter (${config}) not set on the CLI or as an env var!`,
         );
       }
 
@@ -173,7 +170,7 @@ export class ConfigMan {
         logger.startup(
           appOrExtName,
           "Default value used for (%s) = (%j)",
-          options.config,
+          config,
           options.redact ? "redacted" : value,
         );
       }

@@ -1,6 +1,6 @@
 packages:
   - "shell"
-  - "extensions/jira"
-  - "extensions/salesforce"
-  - "extensions/netbox"
-  - "testing"
+  # - "extensions/jira"
+  # - "extensions/salesforce"
+  # - "extensions/netbox"
+  # - "testing"
