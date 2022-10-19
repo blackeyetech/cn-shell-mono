@@ -1,0 +1,61 @@
+{
+  "version": "1.0.0",
+  "name": "@cn-shell3/netbox",
+  "description": "cn-shell v3 extension for Netbox",
+  "main": "./dist/cjs/src/main.js",
+  "module": "./dist/mjs/src/main.js",
+  "exports": {
+    "node": {
+      "require": "./dist/cjs/src/main.js",
+      "import": "./dist/mjs/src/main.js"
+    }
+  },
+  "bin": "",
+  "files": [
+    "dist/**/*"
+  ],
+  "prettier": {
+    "trailingComma": "all"
+  },
+  "scripts": {
+    "build-mjs-dev": "tsc --project tsconfig.mjs.json --sourceMap && cp ../../package.mjs.json dist/mjs/src/package.json",
+    "build-cjs-dev": "tsc --project tsconfig.cjs.json --sourceMap && cp ../../package.cjs.json dist/cjs/src/package.json",
+    "build-dev": "npm run build-mjs-dev && npm run build-cjs-dev",
+    "build-mjs-prod": "tsc --project tsconfig.mjs.json && cp ../../package.mjs.json dist/mjs/src/package.json",
+    "build-cjs-prod": "tsc --project tsconfig.cjs.json && cp ../../package.cjs.json dist/cjs/src/package.json",
+    "build-prod": "npm run clean && npm run build-mjs-prod && npm run build-cjs-prod",
+    "format-ts": "prettier --write 'src/**/*.ts'",
+    "format-js": "prettier --write 'dist/**/*.{js,ts}'",
+    "format-misc": "prettier --write '**/*.{json,md,yaml}'",
+    "install-bin": "npm install -g $(npm pack . | tail -1)",
+    "test": "echo \"No jira tests\" && exit 0",
+    "clean": "rm -rf ./dist",
+    "prepare": "npm run clean && npm run format-ts && npm run format-misc && npm run build-prod",
+    "prepublishOnly": "npm run format-js && npm test"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": [
+    "Cloud",
+    "Native",
+    "Application",
+    "Framework",
+    "CNA",
+    "Netbox"
+  ],
+  "author": "Black Eye Technology",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blackeyetech/cn-shell-mono.git"
+  },
+  "bugs": {
+    "url": "https://github.com/blackeyetech/cn-shell-mono/issues"
+  },
+  "homepage": "https://github.com/blackeyetech/cn-shell-mono/extensions/jira#readme",
+  "dependencies": {
+    "@types/node": "^16",
+    "cn-shell": "workspace:^3.3.0"
+  }
+}
